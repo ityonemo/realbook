@@ -1,0 +1,362 @@
+defmodule Realbook.Commands do
+  @moduledoc """
+  Command macros that are helper functions for common tasks.
+
+  imported into your Realbook scripts by default.
+  """
+
+  @falsy [false, nil]
+
+  @doc false
+  def __run__(cmd!, opts!) do
+    %{module: module, conn: conn} = Realbook.props()
+    {cmd!, opts!} = case Keyword.pop(opts!, :sudo) do
+      {falsy, opts!} when falsy in @falsy -> {cmd!, opts!}
+      {_, opts!} -> {"sudo " <> cmd!, opts!}
+    end
+    opts! = process_tty_as(opts!)
+    module.run(conn, cmd!, opts!)
+  end
+
+  # process tty/as options
+  defp process_tty_as(opts) do
+    cond do
+      # don't change if :as is defined.
+      opts[:as] -> opts
+      # change tty and stream if tty is true
+      opts[:tty] ->
+        Keyword.merge(opts, as: :tuple, stderr: :stream)
+      true ->
+        Keyword.merge(opts, as: :tuple)
+    end
+  end
+
+  @doc false
+  def __send__(symbol, destination, opts) when is_atom(symbol) do
+    case Realbook.get(symbol) do
+      nil ->
+        raise ArgumentError, message: "invalid parameter: `nil`"
+      content ->
+        __send__(content, destination, opts)
+    end
+  end
+  def __send__({:file, path}, destination, opts) when is_binary(path) do
+    case File.read(path) do
+      {:ok, content} -> __send__(content, destination, opts)
+      error -> error
+    end
+  end
+  def __send__(content, symbol, opts) when is_atom(symbol) do
+    case Realbook.get(symbol) do
+      filename when is_binary(filename) ->
+        __send__(content, filename, opts)
+      _ ->
+        {:error, "the filename for sending operations must be a String"}
+    end
+  end
+  def __send__(content, destination, opts) do
+    %{module: module, conn: conn} = Realbook.props()
+    module.send(conn, content, destination, opts)
+  end
+
+  @doc false
+  def __append__(symbol, destination, opts) when is_atom(symbol) do
+    case Realbook.get(symbol) do
+      nil ->
+        raise ArgumentError, message: "invalid parameter: `nil`"
+      content ->
+        __append__(content, destination, opts)
+    end
+  end
+  def __append__({:file, path}, destination, opts) when is_binary(path) do
+    case File.read(path) do
+      {:ok, content} -> __append__(content, destination, opts)
+      error -> error
+    end
+  end
+  def __append__(content, symbol, opts) when is_atom(symbol) do
+    case Realbook.get(symbol) do
+      filename when is_binary(filename) ->
+        __append__(content, filename, opts)
+      _ ->
+        {:error, "the filename for appending operations must be a String"}
+    end
+  end
+  def __append__(content, destination, opts) do
+    %{module: module, conn: conn} = Realbook.props()
+    module.append(conn, content, destination, opts)
+  end
+
+  # run commands
+  @doc """
+  runs a command on the remote host.
+
+  For options, consult your adapter module.
+
+  raises Realbook.ExecutionError if there is a connection error.
+
+  if the command is executed, returns:
+
+  - `{:ok, stdout}` if the command has zero return code.
+  - `{:error, error, retcode}` if the command has nonzero return code.
+
+  """
+  defmacro run(cmd, opts \\ []) do
+    line = __CALLER__.line
+    file = __CALLER__.file
+    quote bind_quoted: [cmd: cmd, opts: opts, line: line, file: file] do
+      case Realbook.Commands.__run__(cmd, opts) do
+        {:ok, {stdout, _stderr}, 0} ->
+          {:ok, stdout}
+        out = {:ok, stdout, 0} ->
+          {:ok, stdout}
+        {:ok, {_, stderr}, retcode} ->
+          {:error, stderr, retcode}
+        {:ok, stdout, retcode} ->
+          {:error, stdout, retcode}
+        {:error, err} ->
+          sudo = opts[:sudo] && "sudo_"
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: file,
+            line: line,
+            cmd: ~s(#{sudo}run "#{cmd}"),
+            error: err
+      end
+    end
+  end
+
+  @doc """
+  runs a command on the remote host.
+
+  For options, consult your adapter module.
+
+  raises Realbook.ExecutionError if there is a connection error OR if the
+  executed command returns a nonzero return code.
+
+  if the command returns a zero return code, this macro returns
+  the standard output of the command.
+  """
+  defmacro run!(cmd, opts \\ []) do
+    line = __CALLER__.line
+    file = __CALLER__.file
+    quote bind_quoted: [cmd: cmd, opts: opts, line: line, file: file] do
+      case Realbook.Commands.__run__(cmd, opts) do
+        {:ok, {stdout, _stderr}, 0} ->
+          stdout
+        {:ok, stdout, 0} ->
+          stdout
+        {:ok, {_, stderr}, retcode} ->
+          sudo = opts[:sudo] && "sudo_"
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: file,
+            line: line,
+            cmd: ~s(#{sudo}run! "#{cmd}"),
+            stderr: stderr,
+            retcode: retcode
+        {:ok, _, retcode} ->
+          sudo = opts[:sudo] && "sudo_"
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: file,
+            line: line,
+            cmd: ~s(#{sudo}run! "#{cmd}"),
+            retcode: retcode
+        {:error, err} ->
+          sudo = opts[:sudo] && "sudo_"
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: file,
+            line: line,
+            cmd: ~s(#{sudo}run! "#{cmd}"),
+            error: err
+      end
+    end
+  end
+
+  @doc "like `run/2`, except with the command run as superuser"
+  defmacro sudo_run(cmd, opts \\ []) do
+    # punt to the existing run command.  This may change in the future
+    # since certain things like environment variables may have to be handled
+    # differently when moving into a SUDO system.
+    quote bind_quoted: [cmd: cmd, opts: opts] do
+      run(cmd, opts ++ [sudo: true])
+    end
+  end
+
+  @doc "like `run!/2`, except with the command run as superuser"
+  defmacro sudo_run!(cmd, opts \\ []) do
+    # punt to the existing run command.  This may change in the future
+    # since certain things like environment variables may have to be handled
+    # differently when moving into a SUDO system.
+    quote bind_quoted: [cmd: cmd, opts: opts] do
+      run!(cmd, opts ++ [sudo: true])
+    end
+  end
+
+  # send commands
+  @doc """
+  sends binary content to the target.
+
+  returns ok if successful and raises on either a connection error or a
+  sending error.
+  """
+  defmacro send!(content, path, opts \\ []) do
+    line = __CALLER__.line
+    file = __CALLER__.file
+    quote bind_quoted: [content: content, path: path, opts: opts, file: file, line: line] do
+      case Realbook.Commands.__send__(content, path, opts) do
+        :ok -> :ok
+        {:error, error} ->
+          sudo = if opts[:sudo], do: "sudo_"
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: file,
+            line: line,
+            msg: error,
+            cmd: "#{sudo}send!"
+      end
+    end
+  end
+
+  @doc """
+  like `send/3` but changes posession of the file to superuser after
+  transmission.
+  """
+  defmacro sudo_send!(content, path, opts \\ []) do
+    quote bind_quoted: [content: content, path: path, opts: opts] do
+      send!(content, path, opts ++ [sudo: true])
+    end
+  end
+
+  @doc """
+  appends binary content to the target file.
+
+  returns ok if successful and raises on either a connection error or a
+  sending error.
+  """
+  defmacro append!(content, path, opts \\ []) do
+    line = __CALLER__.line
+    file = __CALLER__.file
+    quote bind_quoted: [content: content, path: path, opts: opts, file: file, line: line] do
+      case Realbook.Commands.__append__(content, path, opts) do
+        :ok -> :ok
+        {:error, error} ->
+          sudo = if opts[:sudo], do: "sudo_"
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: file,
+            line: line,
+            msg: error,
+            cmd: "#{sudo}send!"
+      end
+    end
+  end
+
+  @doc """
+  like `append!/3` but useful for files which are owned by superuser.
+  """
+  defmacro sudo_append!(content, path, opts \\ []) do
+    quote bind_quoted: [content: content, path: path, opts: opts] do
+      append!(content, path, opts ++ [sudo: true])
+    end
+  end
+
+  #########################################################################
+  # OTHER UTILITIES
+
+  @doc "pauses for `time` milliseconds"
+  defmacro sleep(time) do
+    quote bind_quoted: [time: time] do
+      Process.sleep(time)
+    end
+  end
+
+  @doc """
+  raises `Realbook.ExecutionError` automatically with the issued comment.
+  """
+  defmacro fail(comment) do
+    line = __CALLER__.line
+    file = __CALLER__.file
+    quote bind_quoted: [file: file, line: line, comment: comment] do
+      raise Realbook.ExecutionError,
+        name: __label__(),
+        stage: Realbook.stage(),
+        module: __MODULE__,
+        file: file,
+        line: line,
+        cmd: "fail",
+        msg: comment
+    end
+  end
+
+  @doc """
+  sends a log message with canonical realbook metadata and desired message.
+  """
+  defmacro log(message) do
+    quote bind_quoted: [message: message] do
+      Logger.info(message)
+    end
+  end
+
+  alias Realbook.Macros
+
+  ###########################################################################
+  ## Getters and setters
+
+  @doc """
+  gets a value from the Realbook key/value store.  Registers the
+  key as required prior to running the script.
+  """
+  defmacro get(key) when is_atom(key) do
+    module = __CALLER__.module
+    unless Macros.has_attribute?(module, :required_keys, key) or
+           Macros.has_attribute?(module, :provides_keys, key) do
+      Macros.append_attribute(module, :required_keys, key)
+    end
+    quote do
+      Realbook.get(unquote(key))
+    end
+  end
+
+  @doc """
+  gets a value from the Realbook key/value store, providing a default value
+  if the key has not been set yet.
+
+  ### Important
+  This will not set the value if it has not been set yet.
+  """
+  defmacro get(key, default) when is_atom(key) do
+    quote do
+      Realbook.get(unquote(key), unquote(default))
+    end
+  end
+
+  @doc """
+  sets key/value pairs into the Realbook key/value store.  Registers
+  the keys as provided by the script.
+  """
+  defmacro set(kv) when is_list(kv) do
+    Enum.each(kv, fn {key, _} ->
+      Macros.append_attribute(__CALLER__.module, :provides_keys, key)
+    end)
+
+    quote do
+      Realbook.set(unquote(kv))
+    end
+  end
+
+end
