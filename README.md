@@ -19,9 +19,11 @@ reasonable or useful.  The API will be guaranteed to be stabilized by
   - a separate erlang VM is spawned which contains the realbook modules
     this VM can be thrown away, which clears the resources for those
     modules
+- well-defined logger metadata
 
 The `1.0` version will include telemetry and operability features,
   possibly include support for a pluggable Phoenix LiveView dashboard.
+  It may also possibly include data ingress typechecking.
 
 PRs and assistance greatly welcome.
 
