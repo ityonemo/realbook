@@ -2,8 +2,13 @@
 
 ## 0.1.0
 
-- initial release, as split to a separate project, *warning: untested for real
-  deployments*
+- initial release, as split to a separate project, *warning: untested for real deployments*.
+
+## 0.1.1
+
+- added (provisional) assets! command.  A smarter version will be rolled out
+  in `0.2.0`, so don't count on its current semantics.
+- converted `Realbook.Commands.get/2` to a function instead of a macro.
 
 ## Future features:
 

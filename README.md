@@ -7,6 +7,24 @@ a turing-complete language.
 
 This is the package for you.
 
+## Feature Roadmap
+
+Warning:  This system is not guaranteed to be tested in a real deployment until release `0.2.0`.  It's also not certain if the designed strategy is
+reasonable or useful.  The API will be guaranteed to be stabilized by
+`0.5.0`, at which point the following features will be guaranteed:
+
+- tested in a concurrent deployment scenario
+- being used to deploy an in-prod system
+- being used as a sidecar system via distributed erlang:
+  - a separate erlang VM is spawned which contains the realbook modules
+    this VM can be thrown away, which clears the resources for those
+    modules
+
+The `1.0` version will include telemetry and operability features,
+  possibly include support for a pluggable Phoenix LiveView dashboard.
+
+PRs and assistance greatly welcome.
+
 ## Usage
 
 1. You must set the directory that contains your Realbook scripts:

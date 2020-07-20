@@ -339,10 +339,8 @@ defmodule Realbook.Commands do
   ### Important
   This will not set the value if it has not been set yet.
   """
-  defmacro get(key, default) when is_atom(key) do
-    quote do
-      Realbook.get(unquote(key), unquote(default))
-    end
+  def get(key, default) when is_atom(key) do
+    Realbook.get(key, default)
   end
 
   @doc """
@@ -357,6 +355,19 @@ defmodule Realbook.Commands do
     quote do
       Realbook.set(unquote(kv))
     end
+  end
+
+  @doc """
+  finds a file at the path (relative to the application env
+  variable :realbook, :asset_dir), opens it, and returns the binary.
+
+  raises if :asset_dir is not set or if there is a problem with the file.
+  """
+  def asset!(file_path) do
+    :realbook
+    |> Application.fetch_env!(:asset_dir)
+    |> Path.join(file_path)
+    |> File.read!
   end
 
 end
