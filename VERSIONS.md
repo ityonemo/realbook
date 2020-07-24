@@ -10,6 +10,11 @@
   in `0.2.0`, so don't count on its current semantics.
 - converted `Realbook.Commands.get/2` to a function instead of a macro.
 
+## 0.1.2
+
+- added guides directory to mix package so that downloading from hex.pm
+  doesn't fail
+
 ## Future features:
 
 - Deployment guides

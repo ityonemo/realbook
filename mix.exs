@@ -4,7 +4,7 @@ defmodule Realbook.MixProject do
   def project do
     [
       app: :realbook,
-      version: "0.1.1",
+      version: "0.1.2",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
@@ -17,7 +17,7 @@ defmodule Realbook.MixProject do
       package: [
           description: "Elixir Server deployment and provisioning tool",
           licenses: ["MIT"],
-          files: ~w(lib mix.exs README* LICENSE* VERSIONS*),
+          files: ~w(lib mix.exs README* LICENSE* VERSIONS* guides),
           links: %{"GitHub" => "https://github.com/ityonemo/realbook"}
         ],
       docs: docs(),
