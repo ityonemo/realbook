@@ -36,6 +36,20 @@ defmodule RealbookTest.Macros.RequiresTest do
       assert Realbook.Scripts.Dependency in Realbook.props().completed
     end
 
+    test "will execute word lists" do
+      Realbook.eval("""
+      requires ~w(dependency)
+
+      verify false
+
+      play do
+      end
+      """)
+
+      assert_receive :dependency
+      assert Realbook.Scripts.Dependency in Realbook.props().completed
+    end
+
     test "will preload and execute a comptime variable" do
       Realbook.eval("""
       dependency = "dependency.exs"
