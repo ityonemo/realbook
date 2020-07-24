@@ -27,14 +27,17 @@ defmodule Realbook.Macros do
   this doesn't currently perform cyclical dependency checks.
   """
   defmacro requires(lst) do
-    dependencies = lst
-    |> List.wrap
-    |> Enum.map(&load_module_by_file/1)
+    dependencies = Macro.expand(lst, __CALLER__)
 
-    quote bind_quoted: [dependencies: dependencies] do
-      Realbook.Macros.put_module_dependencies(__MODULE__, dependencies)
+    quote bind_quoted: [dependencies!: dependencies] do
+
+      dependencies! = dependencies!
+      |> List.wrap()
+      |> Enum.map(&Realbook.Macros.load_module_by_file/1)
+
+      Realbook.Macros.put_module_dependencies(__MODULE__, dependencies!)
       # walk down the dependencies and check for key requirements.
-      for dependency <- dependencies do
+      for dependency <- dependencies! do
         # go through the required keys.  If they were produced by
         # a preceding dependency, then don't add them to required keys
         for key <- dependency.__info__(:attributes)[:required_keys] do
@@ -56,15 +59,27 @@ defmodule Realbook.Macros do
     Module.put_attribute(module, :requires_modules, deps)
   end
 
-  defp load_module_by_file(file) do
+  def load_module_by_file(file) do
     file_path = :realbook
     |> Application.get_env(:script_dir)
     |> Path.join(file)
 
     file_path
+    |> normalize!
     |> File.read!
     |> Realbook.compile(file_path)
   end
+
+  defp normalize!(name) do
+    cond do
+      File.exists?(name) -> name
+      File.exists?(name <> ".exs") -> name <> ".exs"
+      true ->
+        dir = Application.get_env(:realbook, :script_dir)
+        raise "could not find realbook script in directory #{dir} corresponding to name #{name}"
+    end
+  end
+
 
   @doc """
   defines actions that *assess the completion* of a realbook script.
