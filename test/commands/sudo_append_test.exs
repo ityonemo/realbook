@@ -45,6 +45,9 @@ defmodule RealbookTest.Commands.SudoAppendTest do
 
     test "works", %{path: path} do
       Realbook.set(path: path)
+
+      Process.sleep(100)
+
       Realbook.eval("""
       verify false
 

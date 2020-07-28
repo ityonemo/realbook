@@ -15,6 +15,11 @@
 - added guides directory to mix package so that downloading from hex.pm
   doesn't fail
 
+## 0.1.3
+
+- fixed `requires` to be able to take a comptime variable
+- fixed `sudo_send` to not fail with a permissions error.
+
 ## Future features:
 
 - Deployment guides

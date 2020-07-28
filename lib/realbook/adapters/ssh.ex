@@ -1,5 +1,12 @@
 defmodule Realbook.Adapters.SSH do
 
+  @moduledoc """
+
+  ## Tips:
+  - you might need this option:
+    `silently_accept_hosts: true`
+  """
+
   @behaviour Realbook.Adapters.Api
   def connect(opts) do
     SSH.connect(opts[:host], Keyword.drop(opts, [:host]))
@@ -10,13 +17,20 @@ defmodule Realbook.Adapters.SSH do
   defdelegate run(conn, cmd, opts), to: SSH
 
   def send(conn, content, remote_file, options) do
-    with :ok <- SSH.send(conn, content, remote_file, Keyword.drop(options, [:sudo])),
-         true <- options[:sudo],
-         {:ok, _, 0} <- run(conn, "sudo chown root:root #{remote_file}", []) do
-      :ok
+    if options[:sudo] do
+      sudo_send(conn, content, remote_file, Keyword.delete(options, :sudo))
     else
-      falsy when falsy in @falsy -> :ok
-      error -> error
+      SSH.send(conn, content, remote_file, options)
+    end
+  end
+
+  def sudo_send(conn, content, remote_file, options) do
+    provisional_file = Path.basename(remote_file)
+
+    with :ok <- SSH.send(conn, content, provisional_file, options),
+         {:ok, _, 0} <- run(conn, "sudo chown root:root #{provisional_file}", []),
+         {:ok, _, 0} <- run(conn, "sudo mv #{provisional_file} #{Path.dirname remote_file}", []) do
+      :ok
     end
   end
 

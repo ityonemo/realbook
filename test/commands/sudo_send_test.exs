@@ -114,6 +114,8 @@ defmodule RealbookTest.Commands.SudoSendTest do
       Realbook.set(tmp_dir: tmp_dir)
       File.mkdir_p!(tmp_dir)
 
+      Process.sleep(100)
+
       Realbook.eval("""
       verify false
       play do
@@ -121,7 +123,6 @@ defmodule RealbookTest.Commands.SudoSendTest do
         sudo_send!("bar", Path.join(tmp_dir, "foo"))
       end
       """)
-
 
       test_file = Path.join(tmp_dir, "foo")
 
