@@ -357,6 +357,82 @@ defmodule Realbook.Commands do
     end
   end
 
+  @default_opts [wait: 1000, count: 10]
+
+  @doc """
+  performs the remote command and repeats it if the command raises or
+  returns false.  Useful for events which may take action *after* the command
+  is issued, such as `systemctl` actions.
+
+  ## Example
+  ```
+  wait_till count: 50 do
+    run! "systemctl is-active --quiet my_service"
+  end
+  ```
+  """
+  defmacro wait_till(opts! \\ [], do: block) do
+    # set default values.
+    opts! = Keyword.merge(@default_opts, opts!)
+    quote do
+      inner_fun = fn ->
+        unquote(block)
+      end
+
+      # use the Y combinator to recurse over this block.
+      y_fn = fn y_fn, opts ->
+        if callback = opts[:callback] do
+          callback.(opts)
+        end
+
+        cond do
+          opts[:count] == 1 and inner_fun.() ->
+            :ok
+          opts[:count] == 1 ->
+            :error
+          (try do
+            inner_fun.()
+          rescue
+            _e in Realbook.ExecutionError ->
+              false
+          end) ->
+            :ok
+          true ->
+            y_fn.(y_fn, Realbook.Commands.__iterate_wait_opts__(opts))
+        end
+      end
+
+      case y_fn.(y_fn, unquote(opts!)) do
+        :ok -> :ok
+        :error ->
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: unquote(__CALLER__.file),
+            line: unquote(__CALLER__.line),
+            cmd: "wait_till"
+      end
+    end
+  end
+
+  @doc false
+  ## private API.  For advancing options on the "wait" parameter.
+  def __iterate_wait_opts__(opts) do
+    wait = opts[:wait]
+    Process.sleep(wait)
+
+    new_wait = if backoff_factor = opts[:backoff] do
+      Enum.random((wait + 1)..trunc(wait * backoff_factor))
+    else
+      wait
+    end
+
+    Keyword.merge(opts,
+      count: opts[:count] - 1,
+      wait: new_wait)
+  end
+
   @doc """
   finds a file at the path (relative to the application env
   variable :realbook, :asset_dir), opens it, and returns the binary.

@@ -26,7 +26,6 @@ defmodule RealbookTest do
     assert Realbook.Scripts.Basic in Realbook.props().completed
   end
 
-  @tag :one
   test "realbook will fail if the conn hasn't been set", %{tmp_dir: tmp_dir} do
     assert_raise RuntimeError, "can't run realbook on #{inspect self()}: not connected", fn ->
       Realbook.set(dirname: tmp_dir)
