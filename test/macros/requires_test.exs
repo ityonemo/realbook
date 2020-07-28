@@ -2,6 +2,7 @@ defmodule RealbookTest.Macros.RequiresTest do
   use ExUnit.Case, async: true
 
   setup do
+    Realbook.connect!(:local)
     Realbook.set(test_pid: self())
   end
 

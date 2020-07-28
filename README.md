@@ -50,7 +50,7 @@ PRs and assistance greatly welcome.
 
 3. Connect to your server.
   ```elixir
-  Realbook.connect(:ssh, host: "my_host_name", user: "my_user_name")
+  Realbook.connect!(:ssh, host: "my_host_name", user: "my_user_name")
   ```
 
 4. Run it!

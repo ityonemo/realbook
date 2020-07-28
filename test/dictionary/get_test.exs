@@ -35,6 +35,7 @@ defmodule RealbookTest.Dictionary.GetTest do
   describe "trying to execute a realbook that requires a value" do
 
     setup do
+      Realbook.connect!(:local)
       Realbook.set(test_pid: self())
     end
 

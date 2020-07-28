@@ -3,6 +3,8 @@ defmodule RealbookTest.Macros.PlayTest do
 
   describe "Realbook.Macro.play/1" do
     test "executes" do
+      Realbook.connect!(:local)
+
       Realbook.set(test_pid: self())
 
       Realbook.eval("""

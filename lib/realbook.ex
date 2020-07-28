@@ -131,6 +131,9 @@ defmodule Realbook do
     module = compile(realbook, file)
     keys = Realbook.Dictionary.keys()
 
+    # check to make sure the conn exists
+    props().conn || raise "can't run realbook on #{inspect self()}: not connected"
+
     # check to make sure that all of the required keys exist in the module
     Enum.each(module.__info__(:attributes)[:required_keys], fn
       key -> key in keys || raise KeyError, key: key
