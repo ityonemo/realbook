@@ -7,17 +7,19 @@ defmodule RealbookTest.Librarian.RegressionTest do
 
     random_dirname = Realbook.tmp_dir!()
 
+    tmp_filename = 0..0xFFFFFFFF
+    |> Enum.random
+    |> Integer.to_string(16)
+
     File.mkdir_p!(random_dirname)
     {_, 0} = System.cmd("chmod", ["700", random_dirname])
     {_, 0} = System.cmd("sudo", ["chown", "root:root", random_dirname])
-
-    Process.sleep(100)
 
     username = case System.cmd("whoami", []) do
       {res, 0} -> String.trim(res)
     end
 
-    random_file_path = Path.join(random_dirname, "foo")
+    random_file_path = Path.join(random_dirname, tmp_filename)
     Realbook.set(random_file_path: random_file_path)
 
     Realbook.connect!(Realbook.Adapters.SSH, host: "localhost", user: username)

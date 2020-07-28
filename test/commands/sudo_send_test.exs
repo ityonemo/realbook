@@ -111,23 +111,25 @@ defmodule RealbookTest.Commands.SudoSendTest do
 
     test "will be able to get a sent file" do
       tmp_dir = Realbook.tmp_dir!()
-      Realbook.set(tmp_dir: tmp_dir)
-      File.mkdir_p!(tmp_dir)
+      tmp_filename = 0..0xFFFFFFFF
+      |> Enum.random
+      |> Integer.to_string(16)
 
-      Process.sleep(100)
+      tmp_filepath = Path.join(tmp_dir, tmp_filename)
+
+      Realbook.set(tmp_filepath: tmp_filepath)
+      File.mkdir_p!(tmp_dir)
 
       Realbook.eval("""
       verify false
       play do
-        tmp_dir = get(:tmp_dir)
-        sudo_send!("bar", Path.join(tmp_dir, "foo"))
+        tmp_filepath = get(:tmp_filepath)
+        sudo_send!("bar", tmp_filepath)
       end
       """)
 
-      test_file = Path.join(tmp_dir, "foo")
-
-      assert File.read!(test_file) =~ "bar"
-      assert %{uid: 0} = File.stat!(test_file)
+      assert File.read!(tmp_filepath) =~ "bar"
+      assert %{uid: 0} = File.stat!(tmp_filepath)
     end
   end
 

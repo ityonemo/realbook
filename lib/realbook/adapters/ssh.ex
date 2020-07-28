@@ -28,9 +28,13 @@ defmodule Realbook.Adapters.SSH do
     provisional_file = Path.basename(remote_file)
 
     with :ok <- SSH.send(conn, content, provisional_file, options),
-         {:ok, _, 0} <- run(conn, "sudo chown root:root #{provisional_file}", []),
-         {:ok, _, 0} <- run(conn, "sudo mv #{provisional_file} #{Path.dirname remote_file}", []) do
+         {:ok, _, 0} <- run(conn, "sudo mv #{provisional_file} #{Path.dirname remote_file}", []),
+         {:ok, _, 0} <- run(conn, "sudo chown root:root #{remote_file}", []) do
       :ok
+    else
+      {:ok, msg, retval} ->
+        {:error, "#{msg}, return code #{retval}"}
+      error -> error
     end
   end
 

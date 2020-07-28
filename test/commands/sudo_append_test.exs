@@ -4,7 +4,16 @@ defmodule RealbookTest.Commands.SudoAppendTest do
   setup do
     random_dirname = Realbook.tmp_dir!
     File.mkdir_p!(random_dirname)
-    path = Path.join(random_dirname, "foo")
+
+    tmp_filename = 0..0xFFFFFFFF
+    |> Enum.random
+    |> Integer.to_string(16)
+
+    tmp_dir = Realbook.tmp_dir!()
+
+    path = Path.join(tmp_dir, tmp_filename)
+    File.mkdir_p!(tmp_dir)
+
     File.write!(path, "foo")
     {:ok, path: path}
   end
@@ -44,9 +53,8 @@ defmodule RealbookTest.Commands.SudoAppendTest do
     end
 
     test "works", %{path: path} do
-      Realbook.set(path: path)
 
-      Process.sleep(100)
+      Realbook.set(path: path)
 
       Realbook.eval("""
       verify false
@@ -57,8 +65,6 @@ defmodule RealbookTest.Commands.SudoAppendTest do
         sudo_append!("bar", path)
       end
       """)
-
-      Process.sleep(250)
 
       assert File.read!(path) == "foobar"
       assert %{
