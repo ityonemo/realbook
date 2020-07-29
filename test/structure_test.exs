@@ -168,7 +168,6 @@ defmodule RealbookTest.StructureTest do
       assert [%Asset{path: "foo.txt"}] = module.__info__(:attributes)[:required_assets]
     end
 
-    @tag :one
     test "asset requirements are transitive" do
       module = Realbook.compile("""
       requires "asset"
@@ -176,7 +175,7 @@ defmodule RealbookTest.StructureTest do
       play do end
       """, "nofile")
 
-      assert [%Asset{path: "foo.txt"}] == module.__info__(:attributes)[:required_assets]
+      assert [%Asset{path: "foo.txt"}] = module.__info__(:attributes)[:required_assets]
     end
   end
 

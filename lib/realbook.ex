@@ -141,6 +141,24 @@ defmodule Realbook do
       key -> key in keys || raise KeyError, key: key
     end)
 
+    # check to make sure that all of the required assets from the module exist
+    Enum.each(module.__info__(:attributes)[:required_assets], fn
+      asset ->
+        # given that we have an attribute, raise if it doesn't exist.
+        :realbook
+        |> Application.get_env(:asset_dir)
+        |> Kernel.||(raise "the realbook #{realbook} requires assets, and no asset dir has been specified.")
+        |> Path.join(asset.path) |> IO.inspect(label: "151")
+        |> File.exists?
+        |> unless do
+          raise Realbook.AssetError,
+            module: module,
+            path: asset.path,
+            file: asset.file,
+            line: asset.line
+        end
+    end)
+
     module.__exec__()
     :ok
   end

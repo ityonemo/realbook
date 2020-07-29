@@ -519,7 +519,10 @@ defmodule Realbook.Commands do
     Realbook.Macros.append_attribute(
       __CALLER__.module,
       :required_assets,
-      %Realbook.Asset{path: file_path})
+      %Realbook.Asset{
+        path: file_path,
+        file: __CALLER__.file,
+        line: __CALLER__.line})
 
     quote bind_quoted: [path: file_path] do
       :realbook
