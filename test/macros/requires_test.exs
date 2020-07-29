@@ -1,6 +1,8 @@
 defmodule RealbookTest.Macros.RequiresTest do
   use ExUnit.Case, async: true
 
+  alias Realbook.Storage
+
   setup do
     Realbook.connect!(:local)
     Realbook.set(test_pid: self())
@@ -20,7 +22,7 @@ defmodule RealbookTest.Macros.RequiresTest do
       """)
 
       assert_receive :dependency
-      assert Realbook.Scripts.Dependency in Realbook.props().completed
+      assert Realbook.Scripts.Dependency in Storage.props(:completed)
     end
 
     test "will preload and execute a dependency without .exs" do
@@ -34,7 +36,7 @@ defmodule RealbookTest.Macros.RequiresTest do
       """)
 
       assert_receive :dependency
-      assert Realbook.Scripts.Dependency in Realbook.props().completed
+      assert Realbook.Scripts.Dependency in Storage.props(:completed)
     end
 
     test "will execute word lists" do
@@ -48,7 +50,7 @@ defmodule RealbookTest.Macros.RequiresTest do
       """)
 
       assert_receive :dependency
-      assert Realbook.Scripts.Dependency in Realbook.props().completed
+      assert Realbook.Scripts.Dependency in Storage.props(:completed)
     end
 
     test "will preload and execute a comptime variable" do
@@ -63,7 +65,7 @@ defmodule RealbookTest.Macros.RequiresTest do
       """)
 
       assert_receive :dependency
-      assert Realbook.Scripts.Dependency in Realbook.props().completed
+      assert Realbook.Scripts.Dependency in Storage.props(:completed)
     end
   end
 end

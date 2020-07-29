@@ -45,6 +45,8 @@ defmodule Realbook do
     completed: [module]
   }
 
+  alias Realbook.Storage
+
   #######################################################################
   ## Core functions
 
@@ -77,7 +79,7 @@ defmodule Realbook do
 
     case module!.connect(opts) do
       {:ok, conn} ->
-        Process.put(:realbook, %{Realbook.props() | conn: conn, module: module!})
+        Storage.update(conn: conn, module: module!)
         conn
       {:error, reason} when is_binary(reason) or is_atom(reason) ->
         raise Realbook.ConnectionError, message: "error connecting: #{reason}"
@@ -132,7 +134,7 @@ defmodule Realbook do
     keys = Realbook.Dictionary.keys()
 
     # check to make sure the conn exists
-    props().conn || raise "can't run realbook on #{inspect self()}: not connected"
+    Storage.props(:conn) || raise "can't run realbook on #{inspect self()}: not connected"
 
     # check to make sure that all of the required keys exist in the module
     Enum.each(module.__info__(:attributes)[:required_keys], fn
@@ -165,10 +167,8 @@ defmodule Realbook do
   puts keys into the Realbook dictionary.
 
   This is a key-value store which stores "variables" for your Realbook
-  scripts.  Note that these key/values are stored in the erlang Process
-  dictionary (see `Process.put/2`) and therefore are tied to the process
-  running the Realbook and will not persist beyond the execution of a single
-  realbook.
+  scripts.  Note that these key/values are stored in an ets table under the
+  Realbook caller's process pid.
 
   Typically, you will run `set/1` prior to executing the Realbook script to
   satisfy all parameters that the it must have at runtime.  The Realbook script
@@ -244,20 +244,15 @@ defmodule Realbook do
   ## PRIVATE API.  may be moved out of this module at any time.
 
   @doc false
-  @spec props() :: t
-  def props, do: Process.get(:realbook, %Realbook{})
-
-  @doc false
   # private API.
   @spec stage() :: stage_t
-  def stage, do: props().stage
+  def stage, do: Storage.props(:stage)
 
   @doc false
   # private API.  Do not use.
   @spec stage(stage_t) :: :ok
   def stage(stage) do
-    Process.put(:realbook, %{props() | stage: stage})
-    :ok
+    Storage.update(stage: stage)
   end
 
   @doc false
@@ -265,9 +260,7 @@ defmodule Realbook do
   # registers a module as having been completed.
   @spec complete(module) :: :ok
   def complete(module) do
-    state = props()
-    Process.put(:realbook, %{state | completed: [module | state.completed]})
-    :ok
+    Storage.update(:completed, &[module | &1])
   end
 
   @doc false

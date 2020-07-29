@@ -1,31 +1,28 @@
 defmodule Realbook.Dictionary do
   @moduledoc false
-
   # private implementation of realbook setters and getters.
+
+  alias Realbook.Storage
 
   @spec set(keyword) :: :ok
   def set(keyword) do
-    realbook = Realbook.props()
-    dictionary = Keyword.merge(realbook.dictionary, keyword)
-    Process.put(:realbook, %{realbook | dictionary: dictionary})
-    :ok
+    Storage.update(:dictionary, &Keyword.merge(&1, keyword))
   end
 
   @spec get(atom, term) :: term
   def get(key, default \\ nil) do
-    realbook = Realbook.props()
+    dictionary = Storage.props(:dictionary)
 
-    realbook
-    |> Map.get(:dictionary)
+    dictionary
     |> Keyword.get(key, default)
     || raise KeyError, key: key,
-                       term: realbook.dictionary
+                       term: dictionary
   end
 
   @spec keys() :: [atom]
   def keys do
-    Realbook.props()
-    |> Map.get(:dictionary)
+    :dictionary
+    |> Storage.props
     |> Keyword.keys
   end
 

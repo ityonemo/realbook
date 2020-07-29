@@ -3,6 +3,8 @@ defmodule RealbookTest.ConnectionTest do
 
   # Tests to make sure that realbook can make usable connections
 
+  alias Realbook.Storage
+
   defmodule MockConn do
     def connect(opt: :success) do
       {:ok, :conn}
@@ -22,7 +24,7 @@ defmodule RealbookTest.ConnectionTest do
       assert %{
         conn: :conn,
         module: MockConn
-      } = Realbook.props()
+      } = Storage.props()
     end
 
     test "raises if it's not an ok tuple" do

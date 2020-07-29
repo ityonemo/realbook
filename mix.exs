@@ -31,7 +31,8 @@ defmodule Realbook.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :ssh]
+      extra_applications: [:logger, :ssh],
+      mod: {Realbook.Storage, []}
     ]
   end
 
