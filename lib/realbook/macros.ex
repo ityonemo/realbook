@@ -180,7 +180,7 @@ defmodule Realbook.Macros do
     quote do
       def __exec__() do
         cond do
-          __MODULE__ in Realbook.props().completed ->
+          __MODULE__ in Realbook.Storage.props(:completed) ->
             :ok
           __verify__(:pre) ->
             Realbook.complete(__MODULE__)

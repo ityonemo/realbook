@@ -1,4 +1,5 @@
 Application.ensure_all_started(:ssh)
+Application.ensure_all_started(:realbook)
 Code.ensure_compiled(:crypto)
 Code.ensure_compiled(:asn1rt_nif)
 Application.put_env(:realbook, :script_dir, Path.join(__DIR__, "_scripts"))

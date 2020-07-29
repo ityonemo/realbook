@@ -5,11 +5,13 @@ defmodule Realbook.Commands do
   imported into your Realbook scripts by default.
   """
 
+  alias Realbook.Storage
+
   @falsy [false, nil]
 
   @doc false
   def __run__(cmd!, opts!) do
-    %{module: module, conn: conn} = Realbook.props()
+    %{module: module, conn: conn} = Storage.props()
     {cmd!, opts!} = case Keyword.pop(opts!, :sudo) do
       {falsy, opts!} when falsy in @falsy -> {cmd!, opts!}
       {_, opts!} -> {"sudo " <> cmd!, opts!}
@@ -55,7 +57,7 @@ defmodule Realbook.Commands do
     end
   end
   def __send__(content, destination, opts) do
-    %{module: module, conn: conn} = Realbook.props()
+    %{module: module, conn: conn} = Storage.props()
     module.send(conn, content, destination, opts)
   end
 
@@ -83,7 +85,7 @@ defmodule Realbook.Commands do
     end
   end
   def __append__(content, destination, opts) do
-    %{module: module, conn: conn} = Realbook.props()
+    %{module: module, conn: conn} = Storage.props()
     module.append(conn, content, destination, opts)
   end
 

@@ -1,6 +1,8 @@
 defmodule RealbookTest do
   use ExUnit.Case
-  
+
+  alias Realbook.Storage
+
   setup do
     {:ok, tmp_dir: Realbook.tmp_dir!()}
   end
@@ -13,7 +15,7 @@ defmodule RealbookTest do
     Realbook.run("basic.exs")
 
     assert File.dir?(tmp_dir)
-    assert Realbook.Scripts.Basic in Realbook.props().completed
+    assert Realbook.Scripts.Basic in Storage.props(:completed)
   end
 
   test "basic realbook can be with local as an atom", %{tmp_dir: tmp_dir} do
@@ -23,7 +25,7 @@ defmodule RealbookTest do
     Realbook.run("basic.exs")
 
     assert File.dir?(tmp_dir)
-    assert Realbook.Scripts.Basic in Realbook.props().completed
+    assert Realbook.Scripts.Basic in Storage.props(:completed)
   end
 
   test "realbook will fail if the conn hasn't been set", %{tmp_dir: tmp_dir} do
