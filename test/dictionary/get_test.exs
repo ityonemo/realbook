@@ -30,6 +30,20 @@ defmodule RealbookTest.Dictionary.GetTest do
       Realbook.Dictionary.set(foo: "baz")
       assert "baz" == Realbook.get(:foo, "bar")
     end
+
+    test "works inside of string interpolation" do
+      Realbook.connect!(:local)
+      Realbook.set(test_pid: self(), content: "foo")
+
+      Realbook.eval(~S"""
+      verify false
+      play do
+        send((get :test_pid), {:content, "#{get :content}"})
+      end
+      """)
+
+      assert_receive {:content, "foo"}
+    end
   end
 
   describe "trying to execute a realbook that requires a value" do
