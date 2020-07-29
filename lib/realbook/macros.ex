@@ -49,6 +49,12 @@ defmodule Realbook.Macros do
         for key <- dependency.__info__(:attributes)[:provides_keys] do
           Realbook.Macros.append_attribute(__MODULE__, :provides_keys, key)
         end
+
+        # also make sure that the 'outside' realbook respects the same asset
+        # requirements.
+        for asset <- dependency.__info__(:attributes)[:required_assets] do
+          Realbook.Macros.append_attribute(__MODULE__, :required_assets, asset)
+        end
       end
     end
   end

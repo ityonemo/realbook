@@ -157,8 +157,6 @@ defmodule RealbookTest.StructureTest do
   describe "when you have an asset directive" do
 
     alias Realbook.Asset
-
-    @tag :one
     test "Realbook.compile/2 will save them in the module props" do
       module = Realbook.compile("""
       my_asset = asset!("foo.txt")
@@ -168,6 +166,17 @@ defmodule RealbookTest.StructureTest do
       """, "nofile")
 
       assert [%Asset{path: "foo.txt"}] = module.__info__(:attributes)[:required_assets]
+    end
+
+    @tag :one
+    test "asset requirements are transitive" do
+      module = Realbook.compile("""
+      requires "asset"
+      verify false
+      play do end
+      """, "nofile")
+
+      assert [%Asset{path: "foo.txt"}] == module.__info__(:attributes)[:required_assets]
     end
   end
 
