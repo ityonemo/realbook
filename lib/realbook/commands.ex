@@ -488,9 +488,9 @@ defmodule Realbook.Commands do
   defmacro assigns(keys) do
     {
       :%{}, [],
-      Enum.map(keys, fn key ->
-        {key, get_key(key)}
-      end)
+      keys
+      |> Macro.expand(__CALLER__)
+      |> Enum.map(&{&1, get_key(&1)})
     }
   end
 
