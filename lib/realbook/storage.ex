@@ -23,8 +23,15 @@ defmodule Realbook.Storage do
   @spec props() :: Realbook.t
   def props do
     # props are stored in the ets table under the key of the root PID.
-    case :ets.lookup(__MODULE__, self()) do
-      [] -> %Realbook{}
+    :"$callers"
+    |> Process.get([])
+    |> prepend_self
+    |> Enum.find_value(%Realbook{}, &lookup/1)
+  end
+
+  defp lookup(pid) do
+    case :ets.lookup(__MODULE__, pid) do
+      [] -> nil
       [{_, realbook}] -> realbook
     end
   end
@@ -41,7 +48,12 @@ defmodule Realbook.Storage do
   @spec update(Realbook.t) :: :ok
   @spec update(keyword) :: :ok
   def update(realbook = %Realbook{}) do
-    :ets.insert(__MODULE__, {self(), realbook})
+    pid = :"$callers"
+    |> Process.get([])
+    |> prepend_self
+    |> Enum.find(&(:ets.lookup(__MODULE__, &1) != []))
+
+    :ets.insert(__MODULE__, {pid || self(), realbook})
     :ok
   end
   def update(lst) when is_list(lst) do
@@ -54,4 +66,9 @@ defmodule Realbook.Storage do
   def update(key, fun) do
     update([{key, fun.(props(key))}])
   end
+
+  ########################################################################
+  ## general helpers
+
+  defp prepend_self(lst), do: [self() | lst]
 end
