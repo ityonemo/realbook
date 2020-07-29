@@ -19,6 +19,7 @@
 
 - fixed `requires` to be able to take a comptime variable
 - fixed `sudo_send` to not fail with a permissions error.
+- implemented `wait_till`
 
 ## Future features:
 

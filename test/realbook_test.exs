@@ -1,6 +1,6 @@
 defmodule RealbookTest do
-  use ExUnit.Case, async: true
-
+  use ExUnit.Case
+  
   setup do
     {:ok, tmp_dir: Realbook.tmp_dir!()}
   end

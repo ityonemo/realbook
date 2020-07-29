@@ -48,13 +48,14 @@ defmodule RealbookTest.Commands.WaitTillTest do
     end
 
     test "callback works" do
-      error = "error in anonymous Realbook, stage: play, command wait_till, (line 8)"
+      error = "error in anonymous Realbook, stage: play, command wait_till, (line 9)"
       assert_raise Realbook.ExecutionError, error, fn ->
         Realbook.eval("""
         verify false
 
         defp cb(opts) do
           send(self(), {:cb, opts})
+          opts
         end
 
         play do
@@ -82,6 +83,7 @@ defmodule RealbookTest.Commands.WaitTillTest do
 
         defp cb(opts) do
           send(self(), {:cb, opts})
+          opts
         end
 
         play do

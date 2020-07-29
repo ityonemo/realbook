@@ -364,7 +364,21 @@ defmodule Realbook.Commands do
   returns false.  Useful for events which may take action *after* the command
   is issued, such as `systemctl` actions.
 
+  ## Options
+  - `:count` (integer) how many times we should try. Defaults to 10.
+  - `:wait` (integer) how many millseconds we should. Defaults to 1000.
+  - `:callback` an arity-1 lambda that will be passed the options keyword
+    list each time the system fails.  The keyword list has the following
+    fields:
+    - `:count` how many times are left
+    - `:wait` how many milleseconds will be waited the next round
+    - `:backoff` exponential factor for the next wait
+    the result of the callback should be updated options; you may save
+    metadata here.
+  - `:backoff` (float)
+
   ## Example
+
   ```
   wait_till count: 50 do
     run! "systemctl is-active --quiet my_service"
@@ -381,14 +395,16 @@ defmodule Realbook.Commands do
 
       # use the Y combinator to recurse over this block.
       y_fn = fn y_fn, opts ->
-        if callback = opts[:callback] do
+        new_opts = if callback = opts[:callback] do
           callback.(opts)
+        else
+          opts
         end
 
         cond do
-          opts[:count] == 1 and inner_fun.() ->
+          new_opts[:count] == 1 and inner_fun.() ->
             :ok
-          opts[:count] == 1 ->
+          new_opts[:count] == 1 ->
             :error
           (try do
             inner_fun.()
@@ -398,7 +414,7 @@ defmodule Realbook.Commands do
           end) ->
             :ok
           true ->
-            y_fn.(y_fn, Realbook.Commands.__iterate_wait_opts__(opts))
+            y_fn.(y_fn, Realbook.Commands.__iterate_wait_opts__(new_opts))
         end
       end
 
