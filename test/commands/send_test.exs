@@ -103,7 +103,7 @@ defmodule RealbookTest.Commands.SendTest do
       end
       """)
 
-      assert_receive {:result, "foo\n"}
+      assert_receive {:result, "foo"}
     end
 
     test "raises if the filename symbol is not a String" do

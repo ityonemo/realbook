@@ -100,6 +100,10 @@ defmodule Realbook.Commands do
   - `{:ok, stdout}` if the command has zero return code.
   - `{:error, error, retcode}` if the command has nonzero return code.
 
+  ### Note
+
+  the stdout term in `run` may have trailing spaces or carriage returns
+  depending on the command being executed; `run!/2` will trim this for you.
   """
   defmacro run(cmd, opts \\ []) do
     line = __CALLER__.line
@@ -138,6 +142,11 @@ defmodule Realbook.Commands do
 
   if the command returns a zero return code, this macro returns
   the standard output of the command.
+
+  ### Note
+
+  `run!` peforms a `String.trim/1` operation on the output,
+  and `run/2` does not.
   """
   defmacro run!(cmd, opts \\ []) do
     line = __CALLER__.line
@@ -145,9 +154,9 @@ defmodule Realbook.Commands do
     quote bind_quoted: [cmd: cmd, opts: opts, line: line, file: file] do
       case Realbook.Commands.__run__(cmd, opts) do
         {:ok, {stdout, _stderr}, 0} ->
-          stdout
+          String.trim(stdout)
         {:ok, stdout, 0} ->
-          stdout
+          String.trim(stdout)
         {:ok, {_, stderr}, retcode} ->
           sudo = opts[:sudo] && "sudo_"
           raise Realbook.ExecutionError,

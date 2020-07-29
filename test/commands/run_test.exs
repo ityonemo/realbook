@@ -19,13 +19,20 @@ defmodule RealbookTest.Commands.RunTest do
       end
       """)
 
-      {whoami, 0} = System.cmd("whoami", [])
+      whoami = "whoami"
+      |> System.cmd([])
+      |> elem(0)
+      |> String.trim
+      
       assert_receive {:result, ^whoami}
     end
 
     test "works in verify" do
       test_pid = self()
-      {whoami, 0} = System.cmd("whoami", [])
+      whoami = "whoami"
+      |> System.cmd([])
+      |> elem(0)
+      |> String.trim
 
       alt_pid = spawn fn ->
         receive do
@@ -110,8 +117,7 @@ defmodule RealbookTest.Commands.RunTest do
       end
       """)
 
-      assert_receive {:result, result}
-      assert result =~ username
+      assert_receive {:result, ^username}
     end
   end
 

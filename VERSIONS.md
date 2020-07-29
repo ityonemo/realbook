@@ -22,6 +22,10 @@
 - implemented `wait_till` macro.
 - implemented `assigns` macro.
 
+## 0.1.4
+
+- makes sure that 
+
 ## Future features:
 
 - Deployment guides

@@ -19,18 +19,18 @@ defmodule RealbookTest.Commands.SudoRunTest do
       end
       """)
 
-      assert_receive {:result, "root\n"}
+      assert_receive {:result, "root"}
     end
 
     test "works in verify" do
       test_pid = self()
       alt_pid = spawn fn ->
         receive do
-          {:result, "root\n"} -> send(test_pid, {:verify, false})
+          {:result, "root"} -> send(test_pid, {:verify, false})
         end
 
         receive do
-          {:result, "root\n"} -> send(test_pid, {:verify, true})
+          {:result, "root"} -> send(test_pid, {:verify, true})
         end
       end
 
