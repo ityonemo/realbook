@@ -66,14 +66,11 @@ defmodule RealbookTest.Commands.WaitTillTest do
         """)
       end
 
-      assert_receive {:cb, opts}
-      assert opts[:count] == 3
+      assert_receive {:cb, %{count: 3}}
 
-      assert_receive {:cb, opts}
-      assert opts[:count] == 2
+      assert_receive {:cb, %{count: 2}}
 
-      assert_receive {:cb, opts}
-      assert opts[:count] == 1
+      assert_receive {:cb, %{count: 1}}
     end
 
     test "exponential callback works" do
@@ -94,17 +91,60 @@ defmodule RealbookTest.Commands.WaitTillTest do
         """)
       end
 
-      assert_receive {:cb, opts1}
-      wait1 = opts1[:wait]
-      assert wait1 == 50
+      assert_receive {:cb, %{wait: 50}}
 
-      assert_receive {:cb, opts2}
-      wait2 = opts2[:wait]
-      assert wait2 > wait1
+      assert_receive {:cb, %{wait: wait2}}
+      assert wait2 > 50
 
-      assert_receive {:cb, opts3}
-      wait3 = opts3[:wait]
+      assert_receive {:cb, %{wait: wait3}}
       assert wait3 > wait2
+    end
+  end
+
+  describe "when you pass to wait_till" do
+    test "a non-integer wait it raises a compile_error" do
+      assert_raise CompileError,
+        "nofile:4: wait option for wait_till macro must be an integer, got 200.5",
+        fn ->
+          Realbook.eval("""
+          verify false
+
+          play do
+            wait_till wait: 200.5 do
+            end
+          end
+          """)
+        end
+    end
+
+    test "a non-integer count it raises a compile_error" do
+      assert_raise CompileError,
+        "nofile:4: count option for wait_till macro must be an integer, got 6.4",
+        fn ->
+          Realbook.eval("""
+          verify false
+
+          play do
+            wait_till count: 6.4 do
+            end
+          end
+          """)
+        end
+    end
+
+    test "a backoff <= 1.0 it raises a compile_error" do
+      assert_raise CompileError,
+        "nofile:4: backoff option for wait_till macro must be a number > 1, got 1.0",
+        fn ->
+          Realbook.eval("""
+          verify false
+
+          play do
+            wait_till backoff: 1.0 do
+            end
+          end
+          """)
+        end
     end
   end
 end

@@ -357,7 +357,7 @@ defmodule Realbook.Commands do
     end
   end
 
-  @default_opts [wait: 1000, count: 10]
+  @default_opts Macro.escape(%{wait: 1000, count: 10})
 
   @doc """
   performs the remote command and repeats it if the command raises or
@@ -367,14 +367,15 @@ defmodule Realbook.Commands do
   ## Options
   - `:count` (integer) how many times we should try. Defaults to 10.
   - `:wait` (integer) how many millseconds we should. Defaults to 1000.
-  - `:callback` an arity-1 lambda that will be passed the options keyword
-    list each time the system fails.  The keyword list has the following
+  - `:callback` an arity-1 lambda that will be passed the options map
+    list each time the system fails.  This map has the following
     fields:
     - `:count` how many times are left
-    - `:wait` how many milleseconds will be waited the next round
-    - `:backoff` exponential factor for the next wait
-    the result of the callback should be updated options; you may save
-    metadata here.
+    - `:wait` how many milliseconds will be waited the next round
+    - `:backoff` exponential factor for the next wait, must be > 1
+    the result of the callback should be updated options; you may also
+    save metadata here, if desired; but do not delete the `:count` or
+    `:wait` keys.
   - `:backoff` (float)
 
   ## Example
@@ -384,11 +385,43 @@ defmodule Realbook.Commands do
     run! "systemctl is-active --quiet my_service"
   end
   ```
+
+  ```
+  wait_till count: 10,  do
+    run! "some-command"
+  end
+  ```
   """
-  defmacro wait_till(opts! \\ [], do: block) do
-    # set default values.
-    opts! = Keyword.merge(@default_opts, opts!)
+  defmacro wait_till(opts \\ [], do: block) do
+
+    # compile-time typechecking on wait_till.
+    count = opts[:count]
+    if count && (not is_integer(count)) do
+      raise CompileError,
+        file: __CALLER__.file,
+        line: __CALLER__.line,
+        description: "count option for wait_till macro must be an integer, got #{inspect count}"
+    end
+
+    wait = opts[:wait]
+    if wait && (not is_integer(wait)) do
+      raise CompileError,
+        file: __CALLER__.file,
+        line: __CALLER__.line,
+        description: "wait option for wait_till macro must be an integer, got #{inspect wait}"
+    end
+
+    backoff = opts[:backoff] || 1.2
+    if backoff && (not is_number(backoff) || backoff <= 1) do
+      raise CompileError,
+        file: __CALLER__.file,
+        line: __CALLER__.line,
+        description: "backoff option for wait_till macro must be a number > 1, got #{inspect backoff}"
+    end
+
     quote do
+      initial_opts = Enum.into(unquote(opts), unquote(@default_opts))
+
       inner_fun = fn ->
         unquote(block)
       end
@@ -418,7 +451,7 @@ defmodule Realbook.Commands do
         end
       end
 
-      case y_fn.(y_fn, unquote(opts!)) do
+      case y_fn.(y_fn, initial_opts) do
         :ok -> :ok
         :error ->
           raise Realbook.ExecutionError,
@@ -444,9 +477,7 @@ defmodule Realbook.Commands do
       wait
     end
 
-    Keyword.merge(opts,
-      count: opts[:count] - 1,
-      wait: new_wait)
+    %{opts | count: opts[:count] - 1, wait: new_wait}
   end
 
   @doc """
