@@ -68,7 +68,7 @@ The package can be installed by adding `realbook` to your list of dependencies i
 ```elixir
 def deps do
   [
-    {:realbook, "~> 0.1.2"}
+    {:realbook, "~> 0.1.3"}
   ]
 end
 ```
