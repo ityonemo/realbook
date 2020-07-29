@@ -24,7 +24,7 @@
 
 ## 0.1.4
 
-- makes sure that 
+- run! now trims its string output.
 
 ## Future features:
 
