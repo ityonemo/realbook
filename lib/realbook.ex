@@ -223,6 +223,7 @@ defmodule Realbook do
 
         Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_keys)
         Realbook.Macros.create_accumulated_attribute(__MODULE__, :provides_keys)
+        Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_assets)
 
         unquote(ast)
 

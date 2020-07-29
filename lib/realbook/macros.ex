@@ -200,7 +200,10 @@ defmodule Realbook.Macros do
   ## general tools for the compilation phase.
 
   @doc false
-  def create_accumulated_attribute(module, attribute) do
+  defmacro create_accumulated_attribute(module_ast, attribute) do
+    # This needs to be a macro so that it gets executed before other
+    # macros inside of the module definition.
+    module = Macro.expand(module_ast, __CALLER__)
     Module.register_attribute(module, attribute, persist: true)
     Module.put_attribute(module, attribute, [])
   end

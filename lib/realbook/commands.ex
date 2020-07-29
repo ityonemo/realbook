@@ -515,11 +515,20 @@ defmodule Realbook.Commands do
 
   raises if :asset_dir is not set or if there is a problem with the file.
   """
-  def asset!(file_path) do
-    :realbook
+  defmacro asset!(file_path) do
+    full_path = :realbook
     |> Application.fetch_env!(:asset_dir)
     |> Path.join(file_path)
-    |> File.read!
+    |> Path.expand
+
+    Realbook.Macros.append_attribute(
+      __CALLER__.module,
+      :required_assets,
+      %Realbook.Asset{path: file_path})
+
+    quote bind_quoted: [path: full_path] do
+      File.read!(path)
+    end
   end
 
 end
