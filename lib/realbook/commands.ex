@@ -481,6 +481,24 @@ defmodule Realbook.Commands do
   end
 
   @doc """
+  extracts the specified keys out of the realbook dictionary and
+  wraps them into a map.  Useful for when an EEx template is generated
+  from an `assigns` variable.
+  """
+  defmacro assigns(keys) do
+    {
+      :%{}, [],
+      Enum.map(keys, fn key ->
+        {key, get_key(key)}
+      end)
+    }
+  end
+
+  defp get_key(key) do
+    {{:., [], [{:__aliases__, [alias: false], [:Realbook, :Commands]}, :get]}, [], [key]}
+  end
+
+  @doc """
   finds a file at the path (relative to the application env
   variable :realbook, :asset_dir), opens it, and returns the binary.
 
