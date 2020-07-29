@@ -79,7 +79,7 @@ defmodule RealbookTest.Commands.SudoRunTest do
       """)
 
       assert_receive {:result, result}
-      assert result =~ "root"
+      assert result == "root"
     end
   end
 
