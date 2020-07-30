@@ -271,11 +271,55 @@ defmodule Realbook do
   ###########################################################################
   ## SIGILS
 
-  defmacro sigil_b({:<<>>, _meta, [definition]}, []) do
+  @doc """
+  Compile and execute a realbook starting at this point in the code.
+
+  This form doesn't perform any interpolation.
+
+  This is the recommended entry point for realbooks, though
+  you can also use `run/1` to directly run a realbook file.
+
+  ## Example
+
+  ```elixir
+  defmodule MyRealbookEntryModule do
+
+    # ...
+
+    def run_realbooks do
+      ~B\"""
+      requires ~w(realbook1 realbook2 realbook2)
+
+      verify false
+
+      play do
+        # ...
+        log "running realbooks"
+      end
+      \"""
+    end
+
+  end
+  ```
+
+  """
+  defmacro sigil_B({:<<>>, _meta, [definition]}, []) do
     file = __CALLER__.file
     line = __CALLER__.line - 1
     quote bind_quoted: [definition: definition, file: file, line: line] do
       Realbook.eval(definition, file, line)
+    end
+  end
+
+  @doc """
+  like `sigil_B/2` but lets you interpolate values from the surrounding
+  context.
+  """
+  defmacro sigil_b(code = {:<<>>, _meta, _}, []) do
+    file = __CALLER__.file
+    line = __CALLER__.line - 1
+    quote bind_quoted: [code: code, file: file, line: line] do
+      Realbook.eval(code, file, line)
     end
   end
 

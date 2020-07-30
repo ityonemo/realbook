@@ -26,6 +26,15 @@
 
 - run! now trims its string output.
 
+## 0.2.0
+
+- more inforamtive KeyErrors
+- asset tracking and errors on absence of the assets
+- support for Tasks
+- correct support for submodule and subdirectory dependencies.
+- sigil_b and sigil_B support
+- simplified requires-only realbooks.
+
 ## Future features:
 
 - Deployment guides
