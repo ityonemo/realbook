@@ -71,7 +71,6 @@ defmodule RealbookTest.Macros.RequiresTest do
       assert_receive {:dependency, Realbook.Scripts.Submodule.Dependency}
     end
 
-    @tag :one
     test "namespaced subdirectories work" do
       Realbook.eval("""
       requires "subdir/dependency"

@@ -328,15 +328,21 @@ defmodule Realbook.Commands do
   ###########################################################################
   ## Getters and setters
 
+  alias Realbook.Variable
+
   @doc """
   gets a value from the Realbook key/value store.  Registers the
   key as required prior to running the script.
   """
   defmacro get(key) when is_atom(key) do
     module = __CALLER__.module
-    unless Macros.has_attribute?(module, :required_keys, key) or
-           Macros.has_attribute?(module, :provides_keys, key) do
-      Macros.append_attribute(module, :required_keys, key)
+    unless Macros.needs_variable?(module, key) or
+           Macros.makes_variable?(module, key) do
+      Macros.declare_variable(module, key,
+        %Variable{
+          file: __CALLER__.file,
+          line: __CALLER__.line,
+        })
     end
     quote do
       Realbook.get(unquote(key))

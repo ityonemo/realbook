@@ -137,7 +137,11 @@ defmodule Realbook do
     Storage.props(:conn) || raise "can't run realbook on #{inspect self()}: not connected"
 
     # check to make sure that all of the required keys exist in the module
-    Enum.each(module.__info__(:attributes)[:required_keys], fn
+    :attributes
+    |> module.__info__()
+    |> Keyword.get(:required_keys)
+    |> Keyword.keys
+    |> Enum.each(fn
       key -> key in keys || raise KeyError, key: key
     end)
 
