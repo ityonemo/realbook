@@ -53,7 +53,6 @@ defmodule RealbookTest.Dictionary.GetTest do
       Realbook.set(test_pid: self())
     end
 
-    @tag :one
     test "fails if it hasn't been set" do
       import Realbook
 

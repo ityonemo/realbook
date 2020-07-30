@@ -264,6 +264,8 @@ defmodule Realbook do
         end
 
         Realbook.Macros.__exec__()
+
+        @before_compile Realbook.Macros
       end
     end
   end

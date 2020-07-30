@@ -202,6 +202,29 @@ defmodule Realbook.Macros do
     end
   end
 
+  @doc false
+  defmacro __before_compile__(%{module: module, file: file}) do
+    # if play wasn't defined, we should be able to inject a default play
+    # function, but this is only valid if we requires dependencies.
+    unless Module.defines?(module, {:__play__, 0}) || Module.defines?(module, {:__verify__, 0}) do
+      if Module.get_attribute(module, :requires_modules, []) == [] do
+        raise CompileError, file: file, description: "play macro omitted in a playbook without dependencies"
+      end
+      quote do
+        def __verify__(:pre), do: false
+        def __verify__(:post), do: true
+
+        def __play__ do
+          :attributes
+          |> __MODULE__.__info__()
+          |> Keyword.get(:requires_modules, [])
+          |> Enum.each(&(&1.__exec__()))
+        end
+      end
+    end
+  end
+
+
   #############################################################################
   ## general tools for the compilation phase.
 

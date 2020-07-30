@@ -11,12 +11,10 @@ defmodule RealbookTest.Macros.RequiresTest do
   @moduletag :requires
 
   describe "Realbook.Macro.requires/1" do
+    @tag :one
     test "will preload and execute a dependency" do
       Realbook.eval("""
       requires "dependency.exs"
-
-      verify false
-      play do end
       """)
 
       assert_receive :dependency
@@ -26,9 +24,6 @@ defmodule RealbookTest.Macros.RequiresTest do
     test "will preload and execute a dependency without .exs" do
       Realbook.eval("""
       requires "dependency"
-
-      verify false
-      play do end
       """)
 
       assert_receive :dependency
@@ -38,9 +33,6 @@ defmodule RealbookTest.Macros.RequiresTest do
     test "will execute word lists" do
       Realbook.eval("""
       requires ~w(dependency)
-
-      verify false
-      play do end
       """)
 
       assert_receive :dependency
@@ -51,9 +43,6 @@ defmodule RealbookTest.Macros.RequiresTest do
       Realbook.eval("""
       dependency = "dependency.exs"
       requires dependency
-
-      verify false
-      play do end
       """)
 
       assert_receive :dependency
@@ -63,9 +52,6 @@ defmodule RealbookTest.Macros.RequiresTest do
     test "namespaced submodules work" do
       Realbook.eval("""
       requires "submodule.dependency"
-
-      verify false
-      play do end
       """)
 
       assert_receive {:dependency, Realbook.Scripts.Submodule.Dependency}
@@ -74,9 +60,6 @@ defmodule RealbookTest.Macros.RequiresTest do
     test "namespaced subdirectories work" do
       Realbook.eval("""
       requires "subdir/dependency"
-
-      verify false
-      play do end
       """)
 
       assert_receive {:dependency, Realbook.Scripts.Subdir.Dependency}
