@@ -9,12 +9,16 @@ This is the package for you.
 
 ## Feature Roadmap
 
-Warning:  This system is not guaranteed to be tested in a real deployment until release `0.2.0`.  It's also not certain if the designed strategy is
-reasonable or useful.  The API will be guaranteed to be stabilized by
-`0.5.0`, at which point the following features will be guaranteed:
+`0.2.0` represents the first release which has been tested in a real-world
+deployment scenario.
 
-- tested in a concurrent deployment scenario
-- being used to deploy an in-prod system
+`0.3.0` will add extra guards and protections, including optional typing
+on variables.
+
+The API will be stabilized by `0.5.0`, at which point the following
+features will be tested:
+
+- rigorously tested in a concurrent deployment scenario
 - being used as a sidecar system via distributed erlang:
   - a separate erlang VM is spawned which contains the realbook modules
     this VM can be thrown away, which clears the resources for those
@@ -23,7 +27,6 @@ reasonable or useful.  The API will be guaranteed to be stabilized by
 
 The `1.0` version will include telemetry and operability features,
   possibly include support for a pluggable Phoenix LiveView dashboard.
-  It may also possibly include data ingress typechecking.
 
 PRs and assistance greatly welcome.
 
@@ -68,7 +71,7 @@ The package can be installed by adding `realbook` to your list of dependencies i
 ```elixir
 def deps do
   [
-    {:realbook, "~> 0.1.4"}
+    {:realbook, "~> 0.2.0"}
   ]
 end
 ```
