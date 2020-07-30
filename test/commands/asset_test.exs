@@ -38,7 +38,6 @@ defmodule RealbookTest.Commands.AssetTest do
       assert_receive {:content, "foo" <> _}
     end
 
-    @tag :one
     test "will throw on launch if the asset doesn't exist" do
       assert_raise Realbook.AssetError, fn ->
         Realbook.eval("""

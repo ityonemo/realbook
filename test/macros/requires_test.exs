@@ -60,7 +60,6 @@ defmodule RealbookTest.Macros.RequiresTest do
       assert Realbook.Scripts.Dependency in Storage.props(:completed)
     end
 
-    @tag :one
     test "namespaced submodules work" do
       Realbook.eval("""
       requires "submodule.dependency"
@@ -70,6 +69,18 @@ defmodule RealbookTest.Macros.RequiresTest do
       """)
 
       assert_receive {:dependency, Realbook.Scripts.Submodule.Dependency}
+    end
+
+    @tag :one
+    test "namespaced subdirectories work" do
+      Realbook.eval("""
+      requires "subdir/dependency"
+
+      verify false
+      play do end
+      """)
+
+      assert_receive {:dependency, Realbook.Scripts.Subdir.Dependency}
     end
   end
 end

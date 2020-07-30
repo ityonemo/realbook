@@ -71,18 +71,18 @@ defmodule Realbook.Macros do
     |> Path.join(file)
 
     file_path
-    |> normalize!
+    |> normalize!(file)
     |> File.read!
-    |> Realbook.compile(file_path)
+    |> Realbook.compile(file)
   end
 
-  defp normalize!(name) do
+  defp normalize!(name, original_path) do
     cond do
       File.exists?(name) -> name
       File.exists?(name <> ".exs") -> name <> ".exs"
       true ->
         dir = Application.get_env(:realbook, :script_dir)
-        raise "could not find realbook script in directory #{dir} corresponding to name #{name}"
+        raise "could not find realbook script in directory #{dir} corresponding to name #{original_path}"
     end
   end
 

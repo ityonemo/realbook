@@ -214,16 +214,15 @@ defmodule Realbook do
         tag = ast |> :erlang.phash2 |> :erlang.term_to_binary |> Base.encode16
         {Module.concat(Realbook.Scripts, "Anonymous#{tag}"), nil}
       path ->
-        basename = Path.basename(path, ".exs")
+        basename = String.trim(path, ".exs")
 
         baselist = basename
-        |> String.split(".")
+        |> String.split(~r/[\.\/]/)
         |> Enum.map(&Macro.camelize/1)
 
         module = Module.concat([Realbook.Scripts | baselist])
-        name = String.to_atom(basename)
 
-        {module, name}
+        {module, basename}
     end
     # check to see if this module already exists.
     if function_exported?(module, :__info__, 1) do
