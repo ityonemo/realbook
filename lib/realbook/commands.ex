@@ -517,9 +517,9 @@ defmodule Realbook.Commands do
 
   @doc """
   finds a file at the path (relative to the application env
-  variable :realbook, :asset_dir), opens it, and returns the binary.
+  variable `:realbook`, `:asset_dir`), opens it, and returns the binary.
 
-  raises if :asset_dir is not set or if there is a problem with the file.
+  raises if `:asset_dir` is not set or if there is a problem with the file.
   """
   defmacro asset!(file_path) do
     Realbook.Macros.append_attribute(

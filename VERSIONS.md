@@ -6,7 +6,7 @@
 
 ## 0.1.1
 
-- added (provisional) assets! command.  A smarter version will be rolled out
+- added (provisional) `asset!` command.  A smarter version will be rolled out
   in `0.2.0`, so don't count on its current semantics.
 - converted `Realbook.Commands.get/2` to a function instead of a macro.
 
@@ -32,8 +32,9 @@
 - asset tracking and errors on absence of the assets
 - support for Tasks
 - correct support for submodule and subdirectory dependencies.
-- sigil_b and sigil_B support
+- `sigil_b` and `sigil_B` support
 - simplified requires-only realbooks.
+- `asset!` is now a macro and causes early checking.
 
 ## Future features:
 
