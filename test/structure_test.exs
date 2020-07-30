@@ -31,6 +31,9 @@ defmodule RealbookTest.StructureTest do
   end
 
   describe "Realbook.compile/2 modules find internal getters" do
+
+    alias Realbook.Variable
+
     test "and makes them required when they are in play directives" do
       module = Realbook.compile("""
       verify false
@@ -39,7 +42,7 @@ defmodule RealbookTest.StructureTest do
       end
       """, "nofile")
 
-      assert :my_value in module.__info__(:attributes)[:required_keys]
+      assert [my_value: %Variable{}] = module.__info__(:attributes)[:required_keys]
     end
 
     test "and makes them required when they are in verify directives" do
@@ -51,7 +54,7 @@ defmodule RealbookTest.StructureTest do
       end
       """, "nofile")
 
-      assert :my_value in module.__info__(:attributes)[:required_keys]
+      assert [my_value: %Variable{}] = module.__info__(:attributes)[:required_keys]
     end
 
     test "and makes them required when they are in def or defp directives" do
@@ -70,8 +73,8 @@ defmodule RealbookTest.StructureTest do
       end
       """, "nofile")
 
-      assert :foo in module.__info__(:attributes)[:required_keys]
-      assert :bar in module.__info__(:attributes)[:required_keys]
+      assert :foo in Keyword.keys(module.__info__(:attributes)[:required_keys])
+      assert :bar in Keyword.keys(module.__info__(:attributes)[:required_keys])
     end
 
     test "don't make them required when they are set in verify directives" do
@@ -84,7 +87,7 @@ defmodule RealbookTest.StructureTest do
       end
       """, "nofile")
 
-      refute :my_value in module.__info__(:attributes)[:required_keys]
+      refute :my_value in Keyword.keys(module.__info__(:attributes)[:required_keys])
     end
 
     test "does not make them required when a default value is provided" do
@@ -95,7 +98,7 @@ defmodule RealbookTest.StructureTest do
       end
       """, "nofile")
 
-      refute :my_value in module.__info__(:attributes)[:required_keys]
+      refute :my_value in Keyword.keys(module.__info__(:attributes)[:required_keys])
     end
   end
 
@@ -134,7 +137,7 @@ defmodule RealbookTest.StructureTest do
       end
       """, "nofile")
 
-      refute :my_value in module.__info__(:attributes)[:required_keys]
+      refute :my_value in Keyword.keys(module.__info__(:attributes)[:required_keys])
     end
   end
 
@@ -148,7 +151,7 @@ defmodule RealbookTest.StructureTest do
 
       assert Realbook.Scripts.Dependency in module.__info__(:attributes)[:requires_modules]
       # and it pulls in the test_pid required keys.
-      assert :test_pid in module.__info__(:attributes)[:required_keys]
+      assert :test_pid in Keyword.keys(module.__info__(:attributes)[:required_keys])
       # and it pulls in the provides keys:
       assert :foo in module.__info__(:attributes)[:provides_keys]
     end

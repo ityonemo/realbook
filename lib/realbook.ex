@@ -128,17 +128,23 @@ defmodule Realbook do
 
   Only use this function if you know what you are doing.
   """
-  def eval(realbook, file \\ "nofile")
-  def eval(realbook, file) when is_binary(realbook) do
-    module = compile(realbook, file)
+  def eval(realbook, file \\ "nofile", line \\ 0)
+  def eval(realbook, file, line) when is_binary(realbook) do
+    module = compile(realbook, file, line)
     keys = Realbook.Dictionary.keys()
 
     # check to make sure the conn exists
     Storage.props(:conn) || raise "can't run realbook on #{inspect self()}: not connected"
 
     # check to make sure that all of the required keys exist in the module
-    Enum.each(module.__info__(:attributes)[:required_keys], fn
-      key -> key in keys || raise KeyError, key: key
+    :attributes
+    |> module.__info__()
+    |> Keyword.get(:required_keys)
+    |> Enum.each(fn
+      {key, spec} ->
+        key in keys ||
+          raise KeyError,
+            message: "key #{inspect key} not found, expected by #{spec.file} (line #{spec.line})"
     end)
 
     # check to make sure that all of the required assets from the module exist
@@ -162,17 +168,17 @@ defmodule Realbook do
     module.__exec__()
     :ok
   end
-  def eval(module, "nofile") when is_atom(module) do
+  def eval(module, _file, _line) when is_atom(module) do
     module.__exec__()
     :ok
   end
 
   @doc false
   # private api, provided as an entrypoint for testing purposes.
-  @spec compile(iodata, Path.t) :: module
-  def compile(realbook, file) do
+  @spec compile(iodata, Path.t, non_neg_integer) :: module
+  def compile(realbook, file, offset \\ 0) do
     [{mod, _bin}] = realbook
-    |> Code.string_to_quoted!(existing_atoms: :safe)
+    |> Code.string_to_quoted!(existing_atoms: :safe, line: 1 + offset)
     |> modulewrap(file)
     mod
   end
@@ -259,6 +265,17 @@ defmodule Realbook do
 
         Realbook.Macros.__exec__()
       end
+    end
+  end
+
+  ###########################################################################
+  ## SIGILS
+
+  defmacro sigil_b({:<<>>, _meta, [definition]}, []) do
+    file = __CALLER__.file
+    line = __CALLER__.line - 1
+    quote bind_quoted: [definition: definition, file: file, line: line] do
+      Realbook.eval(definition, file, line)
     end
   end
 

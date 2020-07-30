@@ -53,19 +53,26 @@ defmodule RealbookTest.Dictionary.GetTest do
       Realbook.set(test_pid: self())
     end
 
+    @tag :one
     test "fails if it hasn't been set" do
-      assert_raise KeyError, fn ->
-        Realbook.eval("""
-        verify false
+      import Realbook
 
-        play do
-          (get :test_pid)
-          |> send(:playing)
+      file = __ENV__.file
+      line = __ENV__.line + 10
+      assert_raise KeyError,
+        "key :foo not found, expected by #{file} (line #{line})",
+        fn ->
+          ~b"""
+          verify false
 
-          get :foo
+          play do
+            (get :test_pid)
+            |> send(:playing)
+
+            get :foo
+          end
+          """
         end
-        """)
-      end
 
       # prove that it never even tries to play.
       refute_receive :playing

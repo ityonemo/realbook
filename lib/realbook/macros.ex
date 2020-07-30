@@ -221,8 +221,20 @@ defmodule Realbook.Macros do
   end
 
   @doc false
-  def has_attribute?(module, attribute, value) do
-    value in Module.get_attribute(module, attribute)
+  def declare_variable(module, key, spec) do
+    append_attribute(module, :required_keys, {key, spec})
+  end
+
+  @doc false
+  def needs_variable?(module, key) do
+    module
+    |> Module.get_attribute(:required_keys)
+    |> Keyword.has_key?(key)
+  end
+
+  @doc false
+  def makes_variable?(module, key) do
+    key in Module.get_attribute(module, :provides_keys)
   end
 
 end
