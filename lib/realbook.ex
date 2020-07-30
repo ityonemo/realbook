@@ -1,19 +1,6 @@
 defmodule Realbook do
 
   @moduledoc """
-  A simple, imperative DSL for remotely provisioning and setting up
-  linux-based servers.
-
-  ## Objectives:
-
-  - convenience
-  - idempotency
-  - inspectability
-
-  ## Guides
-
-  See Guides for information on how to get started.
-
   ## Connecting to remote servers
 
   Realbook provides be default two connection APIs, one of which

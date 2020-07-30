@@ -45,7 +45,7 @@ defmodule Realbook.MixProject do
     |> Enum.map(&"guides/#{&1}")
 
     [
-      main: "Realbook",
+      main: "0-introduction",
       source_url: "https://github.com/ityonemo/realbook",
       extra_section: "guides",
       extras: guides
@@ -55,8 +55,6 @@ defmodule Realbook.MixProject do
   defp deps do
     [
       {:librarian, "~> 0.1.12"},
-      {:nimble_parsec, "~> 0.6"},
-
       # test and support dependencies
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.11", only: :test, runtime: false},
