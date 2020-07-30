@@ -159,7 +159,7 @@ defmodule RealbookTest.StructureTest do
     alias Realbook.Asset
     test "Realbook.compile/2 will save them in the module props" do
       module = Realbook.compile("""
-      my_asset = asset!("foo.txt")
+      asset!("foo.txt")
 
       verify false
       play do end
@@ -178,5 +178,4 @@ defmodule RealbookTest.StructureTest do
       assert [%Asset{path: "foo.txt"}] = module.__info__(:attributes)[:required_assets]
     end
   end
-
 end

@@ -12,8 +12,6 @@ defmodule Realbook.Adapters.SSH do
     SSH.connect(opts[:host], Keyword.drop(opts, [:host]))
   end
 
-  @falsy [nil, false]
-
   defdelegate run(conn, cmd, opts), to: SSH
 
   def send(conn, content, remote_file, options) do

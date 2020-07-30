@@ -40,7 +40,6 @@ defmodule RealbookTest.Commands.AssetTest do
 
     @tag :one
     test "will throw on launch if the asset doesn't exist" do
-      asset_dir = Application.get_env(:realbook, :asset_dir)
       assert_raise Realbook.AssetError, fn ->
         Realbook.eval("""
         verify false

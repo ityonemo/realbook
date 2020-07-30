@@ -216,7 +216,11 @@ defmodule Realbook do
       path ->
         basename = Path.basename(path, ".exs")
 
-        module = Module.concat(Realbook.Scripts, Macro.camelize(basename))
+        baselist = basename
+        |> String.split(".")
+        |> Enum.map(&Macro.camelize/1)
+
+        module = Module.concat([Realbook.Scripts | baselist])
         name = String.to_atom(basename)
 
         {module, name}
