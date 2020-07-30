@@ -366,7 +366,7 @@ defmodule Realbook.Commands do
   """
   defmacro set(kv) when is_list(kv) do
     Enum.each(kv, fn {key, _} ->
-      Macros.append_attribute(__CALLER__.module, :provides_keys, key)
+      Macros.append_attribute(__CALLER__.module, :provides_variables, key)
     end)
 
     quote do

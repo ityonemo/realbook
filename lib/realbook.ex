@@ -139,7 +139,7 @@ defmodule Realbook do
     # check to make sure that all of the required keys exist in the module
     :attributes
     |> module.__info__()
-    |> Keyword.get(:required_keys)
+    |> Keyword.get(:required_variables)
     |> Enum.each(fn
       {key, spec} ->
         key in keys ||
@@ -248,8 +248,8 @@ defmodule Realbook do
         import Realbook.Commands
         require Logger
 
-        Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_keys)
-        Realbook.Macros.create_accumulated_attribute(__MODULE__, :provides_keys)
+        Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_variables)
+        Realbook.Macros.create_accumulated_attribute(__MODULE__, :provides_variables)
         Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_assets)
 
         unquote(ast)

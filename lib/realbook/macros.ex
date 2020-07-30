@@ -40,14 +40,14 @@ defmodule Realbook.Macros do
       for dependency <- dependencies! do
         # go through the required keys.  If they were produced by
         # a preceding dependency, then don't add them to required keys
-        for key <- dependency.__info__(:attributes)[:required_keys] do
-          unless key in Module.get_attribute(__MODULE__, :provides_keys, []) do
-            Realbook.Macros.append_attribute(__MODULE__, :required_keys, key)
+        for key <- dependency.__info__(:attributes)[:required_variables] do
+          unless key in Module.get_attribute(__MODULE__, :provides_variables, []) do
+            Realbook.Macros.append_attribute(__MODULE__, :required_variables, key)
           end
         end
 
-        for key <- dependency.__info__(:attributes)[:provides_keys] do
-          Realbook.Macros.append_attribute(__MODULE__, :provides_keys, key)
+        for key <- dependency.__info__(:attributes)[:provides_variables] do
+          Realbook.Macros.append_attribute(__MODULE__, :provides_variables, key)
         end
 
         # also make sure that the 'outside' realbook respects the same asset
@@ -245,19 +245,19 @@ defmodule Realbook.Macros do
 
   @doc false
   def declare_variable(module, key, spec) do
-    append_attribute(module, :required_keys, {key, spec})
+    append_attribute(module, :required_variables, {key, spec})
   end
 
   @doc false
   def needs_variable?(module, key) do
     module
-    |> Module.get_attribute(:required_keys)
+    |> Module.get_attribute(:required_variables)
     |> Keyword.has_key?(key)
   end
 
   @doc false
   def makes_variable?(module, key) do
-    key in Module.get_attribute(module, :provides_keys)
+    key in Module.get_attribute(module, :provides_variables)
   end
 
 end
