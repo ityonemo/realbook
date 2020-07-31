@@ -141,7 +141,7 @@ defmodule Realbook do
         :realbook
         |> Application.get_env(:asset_dir)
         |> Kernel.||(raise "the realbook #{realbook} requires assets, and no asset dir has been specified.")
-        |> Path.join(asset.path) |> IO.inspect(label: "151")
+        |> Path.join(asset.path)
         |> File.exists?
         |> unless do
           raise Realbook.AssetError,
