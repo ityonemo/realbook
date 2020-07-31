@@ -1,19 +1,6 @@
 defmodule Realbook do
 
   @moduledoc """
-  A simple, imperative DSL for remotely provisioning and setting up
-  linux-based servers.
-
-  ## Objectives:
-
-  - convenience
-  - idempotency
-  - inspectability
-
-  ## Guides
-
-  See Guides for information on how to get started.
-
   ## Connecting to remote servers
 
   Realbook provides be default two connection APIs, one of which
@@ -154,7 +141,7 @@ defmodule Realbook do
         :realbook
         |> Application.get_env(:asset_dir)
         |> Kernel.||(raise "the realbook #{realbook} requires assets, and no asset dir has been specified.")
-        |> Path.join(asset.path) |> IO.inspect(label: "151")
+        |> Path.join(asset.path)
         |> File.exists?
         |> unless do
           raise Realbook.AssetError,
