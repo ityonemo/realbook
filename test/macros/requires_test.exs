@@ -11,7 +11,6 @@ defmodule RealbookTest.Macros.RequiresTest do
   @moduletag :requires
 
   describe "Realbook.Macro.requires/1" do
-    @tag :one
     test "will preload and execute a dependency" do
       Realbook.eval("""
       requires "dependency.exs"

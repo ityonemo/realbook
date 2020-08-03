@@ -57,6 +57,4 @@ defmodule RealbookTest do
     |> List.last
     |> String.starts_with?("Anonymous")
   end
-
-
 end
