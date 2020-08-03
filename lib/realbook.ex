@@ -101,7 +101,7 @@ defmodule Realbook do
     :ok
   end
 
-  @spec eval(iodata, Path.t) :: :ok
+  @spec eval(iodata, Path.t, keyword) :: :ok
   @doc """
   generates an Elixir module corresponding to a realbook script string
   or iodata; then evaluates the module, bound to this process.
@@ -115,9 +115,9 @@ defmodule Realbook do
 
   Only use this function if you know what you are doing.
   """
-  def eval(realbook, file \\ "nofile", line \\ 0)
-  def eval(realbook, file, line) when is_binary(realbook) do
-    module = compile(realbook, file, line)
+  def eval(realbook, file \\ "nofile", options \\ [line: 0])
+  def eval(realbook, file, options) when is_binary(realbook) do
+    module = compile(realbook, file, options)
     keys = Realbook.Dictionary.keys()
 
     # check to make sure the conn exists
@@ -162,11 +162,13 @@ defmodule Realbook do
 
   @doc false
   # private api, provided as an entrypoint for testing purposes.
-  @spec compile(iodata, Path.t, non_neg_integer) :: module
-  def compile(realbook, file, offset \\ 0) do
+  @spec compile(iodata, Path.t, keyword) :: module
+  def compile(realbook, file, options \\ [line: 0]) do
+    offset = Keyword.get(options, :line, 0)
+
     [{mod, _bin}] = realbook
     |> Code.string_to_quoted!(existing_atoms: :safe, line: 1 + offset)
-    |> modulewrap(file)
+    |> modulewrap(file, options)
     mod
   end
 
@@ -201,12 +203,15 @@ defmodule Realbook do
 
   @doc false
   # private api, this function is def public for testing purposes.
-  def modulewrap(ast, file) do
-    {module, name} = case file do
-      "nofile" ->
+  def modulewrap(ast, file, options) do
+    {module, name} = case {file, options[:module]} do
+      {_, module} when is_atom(module) and not is_nil(module) ->
+        tag = ast |> :erlang.phash2 |> :erlang.term_to_binary |> Base.encode16
+        {Module.concat(module, "Anonymous#{tag}"), nil}
+      {"nofile", _} ->
         tag = ast |> :erlang.phash2 |> :erlang.term_to_binary |> Base.encode16
         {Module.concat(Realbook.Scripts, "Anonymous#{tag}"), nil}
-      path ->
+      {path, _} ->
         basename = String.trim(path, ".exs")
 
         baselist = basename
@@ -295,8 +300,8 @@ defmodule Realbook do
   defmacro sigil_B({:<<>>, _meta, [definition]}, []) do
     file = __CALLER__.file
     line = __CALLER__.line - 1
-    quote bind_quoted: [definition: definition, file: file, line: line] do
-      Realbook.eval(definition, file, line)
+    quote bind_quoted: [definition: definition, file: file, line: line, module: __CALLER__.module] do
+      Realbook.eval(definition, file, line: line, module: module)
     end
   end
 
@@ -307,8 +312,8 @@ defmodule Realbook do
   defmacro sigil_b(code = {:<<>>, _meta, _}, []) do
     file = __CALLER__.file
     line = __CALLER__.line - 1
-    quote bind_quoted: [code: code, file: file, line: line] do
-      Realbook.eval(code, file, line)
+    quote bind_quoted: [code: code, file: file, line: line, module: __CALLER__.module] do
+      Realbook.eval(code, file, line: line, module: module)
     end
   end
 

@@ -35,4 +35,28 @@ defmodule RealbookTest do
     end
   end
 
+  defmodule SigilBTest do
+    import Realbook
+    def sigil_b_test1 do
+      ~B"""
+      verify false
+      play do
+        send(self(), {:test1, __MODULE__})
+      end
+      """
+    end
+  end
+
+  test "the things get made" do
+    Realbook.connect!(:local)
+    SigilBTest.sigil_b_test1()
+    assert_receive {:test1, module_name}
+
+    assert module_name
+    |> Module.split
+    |> List.last
+    |> String.starts_with?("Anonymous")
+  end
+
+
 end
