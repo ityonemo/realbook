@@ -36,6 +36,11 @@
 - simplified requires-only realbooks.
 - `asset!` is now a macro and causes early checking.
 
+## 0.2.1
+
+- fix sigil_B to emit correct error messages
+- fix sigil_B to be concurrent
+
 ## Future features:
 
 - Deployment guides
