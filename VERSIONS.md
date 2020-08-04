@@ -41,6 +41,11 @@
 - fix sigil_B to emit correct error messages
 - fix sigil_B to be concurrent
 
+## 0.2.2
+
+- added logger metadata and information to disambiguate hosts in
+  concurrent deploys
+
 ## Future features:
 
 - Deployment guides
