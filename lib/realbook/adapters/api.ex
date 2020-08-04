@@ -30,6 +30,11 @@ defmodule Realbook.Adapters.Api do
   @callback connect(options :: keyword) :: {:ok, conn} | {:error, term}
 
   @doc """
+  provides the connection name, given the initial connection options
+  """
+  @callback name(options :: keyword) :: String.t
+
+  @doc """
   executes a unix command on the remote target.
 
   ## Warning:

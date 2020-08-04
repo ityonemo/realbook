@@ -15,6 +15,8 @@ defmodule RealbookTest.ConnectionTest do
     def connect(_) do
       {:error, "bad connection"}
     end
+
+    def name(_), do: "mockconn"
   end
 
   describe "Realbook.connect!/2" do

@@ -7,13 +7,30 @@ defmodule Realbook.Adapters.SSH do
     `silently_accept_hosts: true`
   """
 
+  require IP
+
   @behaviour Realbook.Adapters.Api
+
+  @impl true
+  @spec connect(keyword) :: {:error, any} | {:ok, pid}
   def connect(opts) do
     SSH.connect(opts[:host], Keyword.drop(opts, [:host]))
   end
 
+  @impl true
+  @spec name(keyword) :: String.t
+  def name(options) do
+    case options[:host] do
+      host when IP.is_ip(host) ->
+        IP.to_string(host)
+      hostname -> hostname
+    end
+  end
+
+  @impl true
   defdelegate run(conn, cmd, opts), to: SSH
 
+  @impl true
   def send(conn, content, remote_file, options) do
     if options[:sudo] do
       sudo_send(conn, content, remote_file, Keyword.delete(options, :sudo))
@@ -36,6 +53,7 @@ defmodule Realbook.Adapters.SSH do
     end
   end
 
+  @impl true
   def append(conn, content, remote_file, options) do
     if options[:sudo] && unwritable?(conn, remote_file) do
       sudo_append(conn, content, remote_file)

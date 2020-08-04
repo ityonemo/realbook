@@ -2,8 +2,13 @@ defmodule Realbook.Adapters.Local do
 
   @behaviour Realbook.Adapters.Api
 
+  @impl true
   @spec connect(keyword) :: {:ok, :local}
   def connect(_opts), do: {:ok, :local}
+
+  @impl true
+  @spec name(keyword) :: String.t
+  def name(_opts), do: "localhost"
 
   @spec process(String.t) :: [String.t]
   defp process(cmd) do
@@ -14,6 +19,7 @@ defmodule Realbook.Adapters.Local do
   ###########################################################################
   ## APPEND AND FRIENDS
 
+  @impl true
   @spec run(:local, any, any) :: {:error, atom} | {:ok, binary, non_neg_integer}
   def run(:local, cmd, opts) do
     [cmd | params] = process(cmd)
@@ -32,9 +38,11 @@ defmodule Realbook.Adapters.Local do
     Keyword.take(opts, [:into, :cd, :env, :arg0, :stderr_to_stdout, :parallelism])
   end
 
+
   ###########################################################################
   ## SEND AND FRIENDS
 
+  @impl true
   @spec send(:local, binary, Path.t, keyword) ::
     :ok | {:error, File.posix}
   def send(:local, content, destination, opts) do
@@ -97,8 +105,9 @@ defmodule Realbook.Adapters.Local do
 
   ###########################################################################
   ## APPEND AND FRIENDS
-
   @writable [:read_write, :write]
+
+  @impl true
   @spec append(:local, binary, Path.t, keyword) :: :ok | {:error, File.posix}
   def append(:local, content, destination, opts) do
     if opts[:sudo] && (File.stat!(destination).access not in @writable) do

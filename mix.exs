@@ -55,6 +55,7 @@ defmodule Realbook.MixProject do
   defp deps do
     [
       {:librarian, "~> 0.1.12"},
+      {:net_address, "~> 0.2"},
       # test and support dependencies
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.11", only: :test, runtime: false},

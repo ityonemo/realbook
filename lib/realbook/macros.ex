@@ -185,14 +185,16 @@ defmodule Realbook.Macros do
   defmacro __exec__() do
     quote do
       def __exec__() do
+        alias Realbook.Storage
+
         cond do
-          __MODULE__ in Realbook.Storage.props(:completed) ->
+          __MODULE__ in Storage.props(:completed) ->
             :ok
           __verify__(:pre) ->
             Realbook.complete(__MODULE__)
             Logger.info(IO.ANSI.bright <> "skipping #{__label__()}")
           true ->
-            Logger.info(IO.ANSI.bright <> "playing #{__label__()}")
+            Logger.info(IO.ANSI.bright <> "playing #{__label__()} on #{Storage.props :hostname}")
             __play__()
             __verify__(:post) || raise Realbook.ExecutionError, name: __label__(), stage: :verification
             Realbook.complete(__MODULE__)

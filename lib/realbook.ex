@@ -17,7 +17,8 @@ defmodule Realbook do
     conn: nil,
     module: nil,
     stage: nil,
-    completed: []
+    completed: [],
+    hostname: ""
   ]
 
   @typedoc false
@@ -29,7 +30,8 @@ defmodule Realbook do
     conn: term,
     module: module,
     stage: stage_t,
-    completed: [module]
+    completed: [module],
+    hostname: String.t
   }
 
   alias Realbook.Storage
@@ -58,6 +60,7 @@ defmodule Realbook do
   """
   def connect!(module!, opts \\ []) do
     Code.ensure_loaded?(module!)
+
     module! = if function_exported?(module!, :connect, 1) do
       module!
     else
@@ -66,7 +69,12 @@ defmodule Realbook do
 
     case module!.connect(opts) do
       {:ok, conn} ->
-        Storage.update(conn: conn, module: module!)
+        hostname = Keyword.get(opts, :alt_name, module!.name(opts))
+
+        Storage.update(
+          conn: conn,
+          module: module!,
+          hostname: hostname)
         conn
       {:error, reason} when is_binary(reason) or is_atom(reason) ->
         raise Realbook.ConnectionError, message: "error connecting: #{reason}"
