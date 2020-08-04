@@ -193,11 +193,11 @@ defmodule Realbook.Macros do
             :ok
           __verify__(:pre) ->
             Realbook.complete(__MODULE__)
-            Logger.info(IO.ANSI.bright <> "skipping #{__label__()} on #{hostname}",
+            Logger.info(IO.ANSI.bright <> "(Realbook@#{hostname}): skipping #{__label__()}",
               realbook: true,
               hostname: hostname)
           true ->
-            Logger.info(IO.ANSI.bright <> "playing #{__label__()} on #{hostname}",
+            Logger.info(IO.ANSI.bright <> "(Realbook@#{hostname}): playing #{__label__()}",
               realbook: true,
               hostname: hostname)
             __play__()

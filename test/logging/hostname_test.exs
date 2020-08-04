@@ -17,7 +17,7 @@ defmodule RealbookTest.Logging.HostnameTest do
 
       log = capture_log &play_empty_realbook/0
 
-      assert log =~ "playing anonymous Realbook on localhost"
+      assert log =~ "(Realbook@localhost): playing anonymous Realbook"
     end
 
     test "can be assigned an alternate name" do
@@ -25,7 +25,7 @@ defmodule RealbookTest.Logging.HostnameTest do
 
       log = capture_log &play_empty_realbook/0
 
-      assert log =~ "playing anonymous Realbook on foo"
+      assert log =~ "(Realbook@foo): playing anonymous Realbook"
     end
 
     test "text-prints the ip address in the case of IP" do
@@ -33,7 +33,7 @@ defmodule RealbookTest.Logging.HostnameTest do
 
       log = capture_log &play_empty_realbook/0
 
-      assert log =~ "playing anonymous Realbook on 127.0.0.1"
+      assert log =~ "(Realbook@127.0.0.1): playing anonymous Realbook"
     end
 
     test "text-prints the ip address in the case of a string" do
@@ -41,7 +41,7 @@ defmodule RealbookTest.Logging.HostnameTest do
 
       log = capture_log &play_empty_realbook/0
 
-      assert log =~ "playing anonymous Realbook on localhost"
+      assert log =~ "(Realbook@localhost): playing anonymous Realbook"
     end
 
     test "when skipping also it does the right thing" do
@@ -56,7 +56,7 @@ defmodule RealbookTest.Logging.HostnameTest do
         """)
       end
 
-      assert log =~ "skipping anonymous Realbook on localhost"
+      assert log =~ "(Realbook@localhost): skipping anonymous Realbook"
     end
 
   end
@@ -73,7 +73,7 @@ defmodule RealbookTest.Logging.HostnameTest do
           """)
         end
 
-      assert log =~ "(bar): foo"
+      assert log =~ "(Realbook@bar): foo"
     end
   end
 
