@@ -1,5 +1,7 @@
 defmodule Realbook.Storage do
 
+  # TODO: roll this into a more idiomatic Realbook.Application module
+
   @moduledoc false
   # this module creates an ets table which holds active realbook
   # information for concurrent systems.
@@ -9,6 +11,7 @@ defmodule Realbook.Storage do
 
   @impl Application
   def start(_, _) do
+    Realbook.CompilerSemaphore.start_link()
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 

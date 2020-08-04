@@ -1,5 +1,5 @@
 defmodule RealbookTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Realbook.Storage
 

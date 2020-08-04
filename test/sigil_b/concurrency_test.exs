@@ -19,7 +19,6 @@ defmodule RealbookTest.SigilB.ConcurrencyTest do
     end
   end
 
-  @tag :one
   test "sigil-bs can be run concurrently" do
     test_pid = self()
     1..4
@@ -27,7 +26,7 @@ defmodule RealbookTest.SigilB.ConcurrencyTest do
     |> Stream.run
 
     for idx <- 1..4 do
-      assert_receive({:done, ^idx})
+      assert_receive({:done, ^idx}, 1000)
     end
   end
 end

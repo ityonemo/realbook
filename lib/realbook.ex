@@ -166,13 +166,12 @@ defmodule Realbook do
   def compile(realbook, file, options \\ [line: 0]) do
     offset = Keyword.get(options, :line, 0)
 
-    [{mod, _bin}] = realbook
+    realbook
     |> Code.string_to_quoted!(
         existing_atoms: :safe,
         line: 1 + offset,
         file: file)
     |> modulewrap(file, options)
-    mod
   end
 
   ##########################################################################
@@ -226,12 +225,18 @@ defmodule Realbook do
         {module, basename}
     end
     # check to see if this module already exists.
-    if function_exported?(module, :__info__, 1) do
-      [{module, nil}]
-    else
-      module
-      |> module_ast(ast, name)
-      |> Code.compile_quoted("#{file}")
+
+    cond do
+      Realbook.CompilerSemaphore.lock(module) == :cleared ->
+        module
+      function_exported?(module, :__info__, 1) ->
+        Realbook.CompilerSemaphore.unlock(module)
+      true ->
+        module
+        |> module_ast(ast, name)
+        |> Code.compile_quoted("#{file}")
+
+        Realbook.CompilerSemaphore.unlock(module)
     end
   end
 
