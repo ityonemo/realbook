@@ -54,4 +54,20 @@ defmodule RealbookTest.Logging.HostnameTest do
     end
   end
 
+  describe "the log command" do
+    test "concatenates the logger command" do
+      Realbook.connect!(:local, alt_name: "bar")
+
+      log = capture_log fn -> Realbook.eval("""
+          verify false
+          play do
+            log "foo"
+          end
+          """)
+        end
+
+      assert log =~ "(bar): foo"
+    end
+  end
+
 end

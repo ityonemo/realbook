@@ -319,7 +319,7 @@ defmodule Realbook.Commands do
   """
   defmacro log(message) do
     quote bind_quoted: [message: message] do
-      Logger.info(message)
+      Logger.info("(#{Realbook.Storage.props :hostname}): #{message}")
     end
   end
 
