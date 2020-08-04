@@ -186,15 +186,20 @@ defmodule Realbook.Macros do
     quote do
       def __exec__() do
         alias Realbook.Storage
+        hostname = Storage.props(:hostname)
 
         cond do
           __MODULE__ in Storage.props(:completed) ->
             :ok
           __verify__(:pre) ->
             Realbook.complete(__MODULE__)
-            Logger.info(IO.ANSI.bright <> "skipping #{__label__()}")
+            Logger.info(IO.ANSI.bright <> "skipping #{__label__()} on #{hostname}",
+              realbook: true,
+              hostname: hostname)
           true ->
-            Logger.info(IO.ANSI.bright <> "playing #{__label__()} on #{Storage.props :hostname}")
+            Logger.info(IO.ANSI.bright <> "playing #{__label__()} on #{hostname}",
+              realbook: true,
+              hostname: hostname)
             __play__()
             __verify__(:post) || raise Realbook.ExecutionError, name: __label__(), stage: :verification
             Realbook.complete(__MODULE__)
