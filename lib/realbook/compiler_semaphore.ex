@@ -1,14 +1,18 @@
 defmodule Realbook.CompilerSemaphore do
+  @moduledoc false
+  use GenServer
+
   # a compiler semaphore for Realbook which ensures that
   # only one compilation unit attempts to compile a module
   # at a time
 
   @type state :: %{optional(module) => [GenServer.from]}
 
-  def start_link do
+  def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
+  @impl true
   def init(nil), do: {:ok, %{}}
 
   # if something takes more than 5 seconds to compile, it's probably
@@ -38,6 +42,7 @@ defmodule Realbook.CompilerSemaphore do
     {:reply, what, Map.delete(lock_list, what)}
   end
 
+  @impl true
   def handle_call({:lock, what}, from, lock_list) do
     lock_impl(what, from, lock_list)
   end
