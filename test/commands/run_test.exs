@@ -136,7 +136,6 @@ defmodule RealbookTest.Commands.RunTest do
       assert_receive {:result, ^username}
     end
 
-    @tag :one
     test "works with :cd option" do
       Realbook.set(dir: __DIR__)
 

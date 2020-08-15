@@ -577,22 +577,39 @@ defmodule Realbook.Commands do
 
   raises if `:asset_dir` is not set or if there is a problem with the file.
   """
-  defmacro asset!(file_path) do
-    Realbook.Macros.append_attribute(
-      __CALLER__.module,
-      :required_assets,
-      %Realbook.Asset{
-        path: file_path,
-        file: __CALLER__.file,
-        line: __CALLER__.line})
-
-    quote bind_quoted: [path: file_path] do
-      :realbook
-      |> Application.fetch_env!(:asset_dir)
-      |> Path.join(path)
-      |> Path.expand
-      |> File.read!
+  defmacro asset!(path) do
+    %{file: file, line: line} = __CALLER__
+    if __CALLER__.function do
+      Realbook.Macros.append_attribute(
+        __CALLER__.module,
+        :required_assets,
+        %Realbook.Asset{path: path, file: file, line: line})
+      quote bind_quoted: [path: path] do
+        Realbook.Commands.__asset__(path)
+      end
+    else
+      quote bind_quoted: [path: path, file: file, line: line] do
+        try do
+          Realbook.Commands.__asset__(path)
+        rescue
+          e in File.Error ->
+            raise CompileError,
+              file: file,
+              line: line,
+              description: "required asset #{path} cannot be loaded (#{:file.format_error e.reason})"
+          f ->
+            IO.inspect(f)
+        end
+      end
     end
+  end
+
+  def __asset__(path) do
+    :realbook
+    |> Application.fetch_env!(:asset_dir)
+    |> Path.join(path)
+    |> Path.expand
+    |> File.read!
   end
 
 end

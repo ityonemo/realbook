@@ -50,4 +50,18 @@ defmodule RealbookTest.Commands.AssetTest do
       end
     end
   end
+
+  describe "when the asset doesn't exist" do
+    test "at compile-time becomes a compile-time error" do
+      import Realbook
+      assert_raise CompileError, "test/commands/asset_test.exs:#{__ENV__.line + 2}: required asset does-not-exist.txt cannot be loaded (no such file or directory)", fn ->
+        ~B"""
+        @nope asset!("does-not-exist.txt")
+
+        verify false
+        play do end
+        """
+      end
+    end
+  end
 end

@@ -7,7 +7,6 @@ defmodule RealbookTest.Commands.RunBoolTest do
       :ok
     end
 
-    @tag :one
     test "works in play" do
       Realbook.eval("""
       verify false
