@@ -235,6 +235,32 @@ defmodule Realbook.Commands do
     end
   end
 
+  @doc """
+  executes a command, ignoring the stdio output of the command, returning
+  true if the command has a 0 unix return value and false otherwise.
+
+  raises on connection errors.
+  """
+  defmacro run_bool!(cmd, opts \\ []) do
+    line = __CALLER__.line
+    file = __CALLER__.file
+    quote bind_quoted: [cmd: cmd, opts: opts, line: line, file: file] do
+      case Realbook.Commands.__run__(cmd, opts) do
+        {:ok, _, 0} -> true
+        {:ok, _, _} -> false
+        {:error, err} ->
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: file,
+            line: line,
+            cmd: ~s(run_bool! "#{cmd}"),
+            error: err
+      end
+    end
+  end
+
   # send commands
   @doc """
   sends binary content to the target.
