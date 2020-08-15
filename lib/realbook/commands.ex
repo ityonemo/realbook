@@ -93,14 +93,21 @@ defmodule Realbook.Commands do
   @doc """
   runs a command on the remote host.
 
-  For options, consult your adapter module.
+  Note that currently, `:ssh` does support using piping operatiors
+  inside of the command, but `:local` does not.
 
   raises Realbook.ExecutionError if there is a connection error.
 
-  if the command is executed, returns:
-
+  ## Return Values
   - `{:ok, stdout}` if the command has zero return code.
   - `{:error, error, retcode}` if the command has nonzero return code.
+
+  ## Common Supported Options
+  - `:sudo` when true, runs as superuser.
+  - `:cd` changes directory prior to executing command
+
+  for options with :local, consult `System.cmd/3`; for options
+  with :ssh, connsult `SSH.run/3`
 
   ### Note
 
