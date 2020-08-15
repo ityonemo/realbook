@@ -96,6 +96,22 @@ defmodule RealbookTest.Commands.RunTest do
         """)
       end
     end
+
+    test "works with :cd option" do
+      Realbook.set(dir: __DIR__)
+
+      Realbook.eval("""
+      verify false
+      play do
+        dir = get :dir
+        ls = run! "ls", cd: dir
+        send(self(), {:ls, ls})
+      end
+      """)
+
+      assert_receive {:ls, ls}
+      assert ls =~ Path.basename(__ENV__.file)
+    end
   end
 
   describe "run!/2 with ssh" do
@@ -118,6 +134,23 @@ defmodule RealbookTest.Commands.RunTest do
       """)
 
       assert_receive {:result, ^username}
+    end
+
+    @tag :one
+    test "works with :cd option" do
+      Realbook.set(dir: __DIR__)
+
+      Realbook.eval("""
+      verify false
+      play do
+        dir = get :dir
+        ls = run! "ls", cd: dir
+        send(self(), {:ls, ls})
+      end
+      """)
+
+      assert_receive {:ls, ls}
+      assert ls =~ Path.basename(__ENV__.file)
     end
   end
 

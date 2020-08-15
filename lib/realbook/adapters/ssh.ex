@@ -28,7 +28,13 @@ defmodule Realbook.Adapters.SSH do
   end
 
   @impl true
-  defdelegate run(conn, cmd, opts), to: SSH
+  def run(conn, cmd, opts) do
+    if dir = opts[:cd] do
+      SSH.run(conn, "cd #{dir}; " <> cmd, Keyword.delete(opts, :cd))
+    else
+      SSH.run(conn, cmd, opts)
+    end
+  end
 
   @impl true
   def send(conn, content, remote_file, options) do
