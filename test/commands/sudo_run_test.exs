@@ -105,4 +105,39 @@ defmodule RealbookTest.Commands.SudoRunTest do
     end
   end
 
+  describe "sudo_run_tty!/2" do
+    setup do
+      Realbook.connect!(Realbook.Adapters.Local)
+      :ok
+    end
+
+    test "works with ssh" do
+      Realbook.eval("""
+      verify false
+
+      play do
+        hostname = sudo_run_tty! "hostname"
+        send(self(), {:hostname, hostname})
+      end
+      """)
+
+      {hostname_str, 0} = System.cmd("hostname", [])
+      hostname = String.trim(hostname_str)
+
+      assert_receive {:hostname, ^hostname}
+    end
+
+    test "errors with correct line numbers" do
+      import Realbook
+      assert_raise Realbook.ExecutionError,
+        "error in anonymous Realbook, stage: play, command sudo_run_tty! \"false\", (line #{__ENV__.line + 4}), with retcode 1", fn ->
+        ~B"""
+        verify false
+        play do
+          sudo_run_tty! "false"
+        end
+        """
+      end
+    end
+  end
 end

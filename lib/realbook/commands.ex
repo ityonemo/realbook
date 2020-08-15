@@ -155,40 +155,40 @@ defmodule Realbook.Commands do
     file = __CALLER__.file
     quote bind_quoted: [cmd: cmd, opts: opts, line: line, file: file] do
       case Realbook.Commands.__run__(cmd, opts) do
-        {:ok, {stdout, _stderr}, 0} ->
-          String.trim(stdout)
+        {:ok, {stdout, stderr}, 0} ->
+          {String.trim(stdout), stderr}
         {:ok, stdout, 0} ->
           String.trim(stdout)
         {:ok, {_, stderr}, retcode} ->
-          sudo = opts[:sudo] && "sudo_"
+          macro = opts[:macro] || "run!"
           raise Realbook.ExecutionError,
             name: __label__(),
             stage: Realbook.stage(),
             module: __MODULE__,
             file: file,
             line: line,
-            cmd: ~s(#{sudo}run! "#{cmd}"),
+            cmd: ~s(#{macro} "#{cmd}"),
             stderr: stderr,
             retcode: retcode
         {:ok, _, retcode} ->
-          sudo = opts[:sudo] && "sudo_"
+          macro = opts[:macro] || "run!"
           raise Realbook.ExecutionError,
             name: __label__(),
             stage: Realbook.stage(),
             module: __MODULE__,
             file: file,
             line: line,
-            cmd: ~s(#{sudo}run! "#{cmd}"),
+            cmd: ~s(#{macro} "#{cmd}"),
             retcode: retcode
         {:error, err} ->
-          sudo = opts[:sudo] && "sudo_"
+          macro = opts[:macro] || "run!"
           raise Realbook.ExecutionError,
             name: __label__(),
             stage: Realbook.stage(),
             module: __MODULE__,
             file: file,
             line: line,
-            cmd: ~s(#{sudo}run! "#{cmd}"),
+            cmd: ~s(#{macro} "#{cmd}"),
             error: err
       end
     end
@@ -200,7 +200,7 @@ defmodule Realbook.Commands do
     # since certain things like environment variables may have to be handled
     # differently when moving into a SUDO system.
     quote bind_quoted: [cmd: cmd, opts: opts] do
-      run(cmd, opts ++ [sudo: true])
+      run(cmd, opts ++ [sudo: true, macro: "sudo_run"])
     end
   end
 
@@ -210,7 +210,28 @@ defmodule Realbook.Commands do
     # since certain things like environment variables may have to be handled
     # differently when moving into a SUDO system.
     quote bind_quoted: [cmd: cmd, opts: opts] do
-      run!(cmd, opts ++ [sudo: true])
+      run!(cmd, opts ++ [sudo: true, macro: "sudo_run!"])
+    end
+  end
+
+  @doc """
+  shortcut for `run! <cmd>, tty: true, stdout: :stream`
+
+  Generally this should be used for `apt-get` commands.
+  """
+  defmacro run_tty!(cmd, opts \\ []) do
+    quote bind_quoted: [cmd: cmd, opts: opts] do
+      run!(cmd, Keyword.merge([tty: true, stdout: :stream, macro: "run_tty!"], opts))
+    end
+  end
+
+  @doc "like `run_tty!/2`, except with the command run as superuser"
+  defmacro sudo_run_tty!(cmd, opts \\ []) do
+    # punt to the existing run command.  This may change in the future
+    # since certain things like environment variables may have to be handled
+    # differently when moving into a SUDO system.
+    quote bind_quoted: [cmd: cmd, opts: opts] do
+      run_tty!(cmd, opts ++ [sudo: true, macro: "sudo_run_tty!"])
     end
   end
 

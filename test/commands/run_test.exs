@@ -23,7 +23,7 @@ defmodule RealbookTest.Commands.RunTest do
       |> System.cmd([])
       |> elem(0)
       |> String.trim
-      
+
       assert_receive {:result, ^whoami}
     end
 
@@ -140,6 +140,42 @@ defmodule RealbookTest.Commands.RunTest do
 
       {whoami, 0} = System.cmd("whoami", [])
       assert_receive {:result, {:ok, ^whoami}}
+    end
+  end
+
+  describe "run_tty!/2" do
+    setup do
+      Realbook.connect!(Realbook.Adapters.Local)
+      :ok
+    end
+
+    test "works with ssh" do
+      Realbook.eval("""
+      verify false
+
+      play do
+        hostname = run_tty! "hostname"
+        send(self(), {:hostname, hostname})
+      end
+      """)
+
+      {hostname_str, 0} = System.cmd("hostname", [])
+      hostname = String.trim(hostname_str)
+
+      assert_receive {:hostname, ^hostname}
+    end
+
+    test "errors with correct line numbers" do
+      import Realbook
+      assert_raise Realbook.ExecutionError,
+        "error in anonymous Realbook, stage: play, command run_tty! \"false\", (line #{__ENV__.line + 4}), with retcode 1", fn ->
+        ~B"""
+        verify false
+        play do
+          run_tty! "false"
+        end
+        """
+      end
     end
   end
 end
