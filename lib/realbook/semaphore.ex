@@ -45,10 +45,10 @@ defmodule Realbook.Semaphore do
   def unlock(what), do: GenServer.call(__MODULE__, {:unlock, what})
 
   defp unlock_impl({pid, what}, lock_list) when is_pid(pid) do
-    true_key = if Map.has_key?(lock_list, {:global, what}) do
-      {:global, what}
-    else
-      {pid, what}
+    true_key = cond do
+      Map.has_key?(lock_list, {:global, what}) -> {:global, what}
+      Map.has_key?(lock_list, {pid, what}) -> {pid, what}
+      true -> raise "key #{inspect what} not found"
     end
     unlock_impl_common(true_key, lock_list)
   end
