@@ -254,29 +254,36 @@ defmodule Realbook do
   def module_ast(module, ast, name) do
     quote do
       defmodule unquote(module) do
-        import Realbook.Macros
-        import Realbook.Commands
-        require Logger
-
-        Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_variables)
-        Realbook.Macros.create_accumulated_attribute(__MODULE__, :provides_variables)
-        Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_assets)
+        use Realbook, name: unquote(name)
 
         unquote(ast)
-
-        def __name__, do: unquote(name)
-        def __label__ do
-          if name = __name__() do
-            "Realbook #{name}"
-          else
-            "anonymous Realbook"
-          end
-        end
-
-        Realbook.Macros.__exec__()
-
-        @before_compile Realbook.Macros
       end
+    end
+  end
+
+  defmacro __using__(options) do
+    quote do
+      import Realbook.Macros
+      import Realbook.Commands
+      require Logger
+
+      Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_variables)
+      Realbook.Macros.create_accumulated_attribute(__MODULE__, :provides_variables)
+      Realbook.Macros.create_accumulated_attribute(__MODULE__, :required_assets)
+
+      def __name__, do: unquote(options[:name])
+      def __label__ do
+        if name = __name__() do
+          "Realbook #{name}"
+        else
+          "anonymous Realbook"
+        end
+      end
+
+      # generate the exec function.
+      Realbook.Macros.__exec__()
+      
+      @before_compile Realbook.Macros
     end
   end
 
