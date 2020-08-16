@@ -8,19 +8,28 @@ defmodule Realbook.Semaphore do
 
   @type state :: %{optional(module) => [GenServer.from]}
 
-  def start_link(name) do
-    GenServer.start_link(__MODULE__, nil, name: name)
+  def start_link(_) do
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
   @impl true
-  def init(nil), do: {:ok, %{}}
+  def init(_), do: {:ok, %{}}
 
-  # if something takes more than 5 seconds to compile, it's probably
-  # a problem.
-  @spec lock(atom, module) :: :locked | :cleared
-  def lock(semaphore, what), do: GenServer.call(semaphore, {:lock, what})
+  @spec lock(term, timeout) :: :locked
+  def lock(what, timeout \\ 5000) do
+    last_time = DateTime.utc_now()
+    case GenServer.call(__MODULE__, {:lock, what}, timeout) do
+      :locked -> :locked
+      :cleared ->
+        time_left = timeout - DateTime.diff(DateTime.utc_now(), last_time, :millisecond)
+        unless timeout > 0 do
+          raise "timed out"
+        end
+        lock(what, time_left)
+    end
+  end
   defp lock_impl(what, from, lock_list) when is_map_key(lock_list, what) do
-    # if we arent' the first one here, we have to add ourselves to the list
+    # if we aren't the first one here, we have to add ourselves to the list
     # of processes that need to be notified to be unlocked.
     {:noreply, Map.put(lock_list, what, [from | lock_list[what]])}
   end
@@ -32,8 +41,8 @@ defmodule Realbook.Semaphore do
     {:reply, :locked, Map.put(lock_list, what, [])}
   end
 
-  @spec unlock(atom, module) :: module
-  def unlock(semaphore, what), do: GenServer.call(semaphore, {:unlock, what})
+  @spec unlock(term) :: module
+  def unlock(what), do: GenServer.call(__MODULE__, {:unlock, what})
   defp unlock_impl(what, lock_list) do
     # the locking process has finished its compilation and so it needs to
     # release all of the modules, then it needs to clear the list of

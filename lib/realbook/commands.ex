@@ -597,8 +597,6 @@ defmodule Realbook.Commands do
               file: file,
               line: line,
               description: "required asset #{path} cannot be loaded (#{:file.format_error e.reason})"
-          f ->
-            IO.inspect(f)
         end
       end
     end
@@ -610,6 +608,33 @@ defmodule Realbook.Commands do
     |> Path.join(path)
     |> Path.expand
     |> File.read!
+  end
+
+  #############################################################################
+  ## semaphores:  Locking and Unlocking
+
+  defmacro lock(value) do
+    quote bind_quoted: [value: value] do
+      alias Realbook.Semaphore
+
+      caller = :"$callers"
+      |> Process.get([self()])
+      |> List.last
+
+      Semaphore.lock({caller, value})
+    end
+  end
+
+  defmacro unlock(value) do
+    quote bind_quoted: [value: value] do
+      alias Realbook.Semaphore
+
+      caller = :"$callers"
+      |> Process.get([self()])
+      |> List.last
+      
+      Semaphore.unlock({caller, value})
+    end
   end
 
 end

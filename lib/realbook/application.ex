@@ -7,9 +7,7 @@ defmodule Realbook.Application do
   def start(_, _) do
     children = [
       Realbook.Storage,
-      {Realbook.Semaphore, Compiler},
-      {Registry, keys: :unique, name: Realbook.Semaphore.Registry},
-      {DynamicSupervisor, strategy: :one_for_one, name: Realbook.Semaphore.Supervisor}
+      Realbook.Semaphore
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)
