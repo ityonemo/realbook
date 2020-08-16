@@ -43,7 +43,18 @@ defmodule Realbook.Semaphore do
 
   @spec unlock(term) :: module
   def unlock(what), do: GenServer.call(__MODULE__, {:unlock, what})
-  defp unlock_impl(what, lock_list) do
+
+  defp unlock_impl({pid, what}, lock_list) when is_pid(pid) do
+    true_key = if Map.has_key?(lock_list, {:global, what}) do
+      {:global, what}
+    else
+      {pid, what}
+    end
+    unlock_impl_common(true_key, lock_list)
+  end
+  defp unlock_impl(what, lock_list), do: unlock_impl_common(what, lock_list)
+
+  defp unlock_impl_common(what, lock_list) do
     # the locking process has finished its compilation and so it needs to
     # release all of the modules, then it needs to clear the list of
     # things that need bo contacted.

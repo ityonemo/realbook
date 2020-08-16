@@ -613,15 +613,22 @@ defmodule Realbook.Commands do
   #############################################################################
   ## semaphores:  Locking and Unlocking
 
-  defmacro lock(value) do
-    quote bind_quoted: [value: value] do
-      alias Realbook.Semaphore
+  defmacro lock(value, options \\ []) do
+    if options[:global] do
+      quote bind_quoted: [value: value] do
+        alias Realbook.Semaphore
+        Semaphore.lock({:global, value})
+      end
+    else
+      quote bind_quoted: [value: value] do
+        alias Realbook.Semaphore
 
-      caller = :"$callers"
-      |> Process.get([self()])
-      |> List.last
+        caller = :"$callers"
+        |> Process.get([self()])
+        |> List.last
 
-      Semaphore.lock({caller, value})
+        Semaphore.lock({caller, value})
+      end
     end
   end
 
@@ -632,7 +639,7 @@ defmodule Realbook.Commands do
       caller = :"$callers"
       |> Process.get([self()])
       |> List.last
-      
+
       Semaphore.unlock({caller, value})
     end
   end

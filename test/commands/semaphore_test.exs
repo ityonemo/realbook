@@ -21,7 +21,7 @@ defmodule Realbook.Commands.SemaphoreTest do
     {:ok, sem} = Agent.start_link(fn -> :ok end, name: __MODULE__)
     {:ok, sem: sem}
   end
-  
+
   test "the system has working lock semantics" do
     import Realbook
 
@@ -53,6 +53,40 @@ defmodule Realbook.Commands.SemaphoreTest do
     """
 
     assert_receive {:result, [:ok, :ok, :ok, :ok]}
+  end
+
+  test "the global locks work" do
+    import Realbook
+
+    Realbook.connect!(:local)
+
+    ~B"""
+    verify false
+
+    alias Realbook.Commands.SemaphoreTest
+
+    def async(idx) do
+      test_pid = self()
+      spawn(fn ->
+        lock(:foo, global: true)
+        SemaphoreTest.acquire()
+        result = SemaphoreTest.release()
+        Process.sleep(20)
+        unlock(:foo)
+        send(test_pid, {idx, result})
+      end)
+    end
+
+
+    play do
+      # make several clones
+      Enum.map(1..4, &async/1)
+    end
+    """
+
+    Enum.each(1..4, fn idx ->
+      assert_receive {^idx, :ok}
+    end)
   end
 
 end
