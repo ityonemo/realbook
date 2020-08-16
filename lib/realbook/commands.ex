@@ -613,34 +613,46 @@ defmodule Realbook.Commands do
   #############################################################################
   ## semaphores:  Locking and Unlocking
 
+  @doc """
+  takes out a semaphore lock against a key.  Only one process may pass
+  through this semaphore at a time.
+
+  For example, if you would like to run `apt` commands in concurrent tasks
+  then, you will want to make sure that only one task may obtain the remote
+  process lock at a time.  You can thus take out a semaphore.
+
+  ## Options
+  - `:timeout` how long to wait for the timeout.  Defaults to 5000 ms.
+  - `:global` if true, takes out a semaphore across all realbooks.
+  """
   defmacro lock(value, options \\ []) do
+    timeout = Keyword.get(options, :timeout, 5000)
     if options[:global] do
-      quote bind_quoted: [value: value] do
-        alias Realbook.Semaphore
-        Semaphore.lock({:global, value})
+      quote bind_quoted: [value: value, timeout: timeout] do
+        Realbook.Semaphore.lock({:global, value}, timeout)
       end
     else
-      quote bind_quoted: [value: value] do
-        alias Realbook.Semaphore
-
+      quote bind_quoted: [value: value, timeout: timeout] do
         caller = :"$callers"
         |> Process.get([self()])
         |> List.last
 
-        Semaphore.lock({caller, value})
+        Realbook.Semaphore.lock({caller, value}, timeout)
       end
     end
   end
 
+  @doc """
+  releases a semaphore lock against a key.  Will selectively release a
+  local key and ignore a global key if they share a name.
+  """
   defmacro unlock(value) do
     quote bind_quoted: [value: value] do
-      alias Realbook.Semaphore
-
       caller = :"$callers"
       |> Process.get([self()])
       |> List.last
 
-      Semaphore.unlock({caller, value})
+      Realbook.Semaphore.unlock({caller, value})
     end
   end
 
