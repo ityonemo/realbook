@@ -1,4 +1,4 @@
-defmodule Realbook.CompilerSemaphore do
+defmodule Realbook.Semaphore do
   @moduledoc false
   use GenServer
 
@@ -8,8 +8,8 @@ defmodule Realbook.CompilerSemaphore do
 
   @type state :: %{optional(module) => [GenServer.from]}
 
-  def start_link(_) do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  def start_link(name) do
+    GenServer.start_link(__MODULE__, nil, name: name)
   end
 
   @impl true
@@ -17,8 +17,8 @@ defmodule Realbook.CompilerSemaphore do
 
   # if something takes more than 5 seconds to compile, it's probably
   # a problem.
-  @spec lock(module) :: :locked | :cleared
-  def lock(what), do: GenServer.call(__MODULE__, {:lock, what})
+  @spec lock(atom, module) :: :locked | :cleared
+  def lock(semaphore, what), do: GenServer.call(semaphore, {:lock, what})
   defp lock_impl(what, from, lock_list) when is_map_key(lock_list, what) do
     # if we arent' the first one here, we have to add ourselves to the list
     # of processes that need to be notified to be unlocked.
@@ -32,8 +32,8 @@ defmodule Realbook.CompilerSemaphore do
     {:reply, :locked, Map.put(lock_list, what, [])}
   end
 
-  @spec unlock(module) :: module
-  def unlock(what), do: GenServer.call(__MODULE__, {:unlock, what})
+  @spec unlock(atom, module) :: module
+  def unlock(semaphore, what), do: GenServer.call(semaphore, {:unlock, what})
   defp unlock_impl(what, lock_list) do
     # the locking process has finished its compilation and so it needs to
     # release all of the modules, then it needs to clear the list of

@@ -235,16 +235,16 @@ defmodule Realbook do
     # check to see if this module already exists.
 
     cond do
-      Realbook.CompilerSemaphore.lock(module) == :cleared ->
+      Realbook.Semaphore.lock(Compiler, module) == :cleared ->
         module
       function_exported?(module, :__info__, 1) ->
-        Realbook.CompilerSemaphore.unlock(module)
+        Realbook.Semaphore.unlock(Compiler, module)
       true ->
         module
         |> module_ast(ast, name)
         |> Code.compile_quoted("#{file}")
 
-        Realbook.CompilerSemaphore.unlock(module)
+        Realbook.Semaphore.unlock(Compiler, module)
     end
   end
 
