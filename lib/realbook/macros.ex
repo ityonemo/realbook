@@ -28,12 +28,14 @@ defmodule Realbook.Macros do
   """
   defmacro requires(lst) do
     dependencies = Macro.expand(lst, __CALLER__)
+    file = __CALLER__.file
+    line = __CALLER__.line
 
-    quote bind_quoted: [dependencies!: dependencies] do
+    quote bind_quoted: [dependencies!: dependencies, file: file, line: line] do
 
       dependencies! = dependencies!
       |> List.wrap()
-      |> Enum.map(&Realbook.Macros.load_module_by_file/1)
+      |> Enum.map(&Realbook.Macros.load_module(&1, file, line))
 
       Realbook.Macros.put_module_dependencies(__MODULE__, dependencies!)
       # walk down the dependencies and check for key requirements.
@@ -65,7 +67,7 @@ defmodule Realbook.Macros do
     Module.put_attribute(module, :requires_modules, deps)
   end
 
-  def load_module_by_file(file) do
+  def load_module(file, _, _) when is_binary(file) do
     file_path = :realbook
     |> Application.get_env(:script_dir)
     |> Path.join(file)
@@ -74,6 +76,16 @@ defmodule Realbook.Macros do
     |> normalize!(file)
     |> File.read!
     |> Realbook.compile(file)
+  end
+  def load_module(module, file, line) when is_atom(module) do
+    inferred = Module.concat(Realbook.Scripts, module)
+    cond do
+      Code.ensure_loaded?(module) -> module
+      Code.ensure_loaded?(inferred) -> inferred
+      true ->
+        raise CompileError, file: file, line: line, description:
+          "the module corresponding to the name #{inspect module} could not be found"
+    end
   end
 
   defp normalize!(name, original_path) do

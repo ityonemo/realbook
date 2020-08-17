@@ -1,3 +1,12 @@
+defmodule Realbook.Scripts.TestCapitalizedModule do
+  use Realbook
+
+  verify false
+  play do
+    send(self(), :foo)
+  end
+end
+
 defmodule RealbookTest.Macros.RequiresTest do
   use ExUnit.Case, async: true
 
@@ -62,6 +71,44 @@ defmodule RealbookTest.Macros.RequiresTest do
       """)
 
       assert_receive {:dependency, Realbook.Scripts.Subdir.Dependency}
+    end
+
+    test "will work when the list is empty" do
+      Realbook.eval("""
+      requires []
+      verify false
+      play do end
+      """)
+    end
+
+    test "will find modules if the value is capitalized" do
+      Realbook.eval("""
+      requires TestCapitalizedModule
+      verify false
+      play do end
+      """)
+
+      assert_receive :foo
+    end
+
+    test "will find modules if the value is a capitalized atom" do
+      Realbook.eval("""
+      requires :TestCapitalizedModule
+      verify false
+      play do end
+      """)
+
+      assert_receive :foo
+    end
+
+    test "will find fully qualified module names" do
+      Realbook.eval("""
+      requires Realbook.Scripts.TestCapitalizedModule
+      verify false
+      play do end
+      """)
+
+      assert_receive :foo
     end
   end
 end
