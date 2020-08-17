@@ -64,4 +64,42 @@ defmodule RealbookTest.Commands.AssetTest do
       end
     end
   end
+
+  describe "asset_path/1" do
+    test "will provide the asset path" do
+      import Realbook
+
+      ~B"""
+      @asset_path asset_path!("foo.txt")
+
+      verify false
+      play do
+        send(self(), {:asset, @asset_path})
+      end
+      """
+
+      assert_receive {:asset, asset_path}
+      assert "foo.txt" == Path.basename(asset_path)
+    end
+
+    @tag :one
+    test "raises with compiler error if it doesn't exist" do
+      import Realbook
+
+      asset_dir = Application.get_env(:realbook, :asset_dir)
+      code_file = Path.relative_to_cwd(__ENV__.file)
+
+      assert_raise CompileError,
+        "#{code_file}:#{__ENV__.line + 2}: required asset #{asset_dir}/does-not-exist.txt does not exist.", fn ->
+        ~B"""
+        @asset_path asset_path!("does-not-exist.txt")
+
+        verify false
+        play do
+          send(self(), {:asset, @asset_path})
+        end
+        """
+      end
+    end
+  end
 end
