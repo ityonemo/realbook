@@ -23,6 +23,16 @@ defmodule Realbook.Macros do
   requires ~w(foo.exs bar.exs baz.exs)
   ```
 
+  If you're using precompiled realbooks, you can emit a list of realbook
+  short names (if they are prefixed with `Realbook.Scripts` or fully qualified
+  names).  The following are equivalent (if the corresponding realbooks exist):
+
+  ```
+  requires [Foo, Bar, Baz]
+  requires ~w(Foo Bar Baz)a
+  requires [Realbook.Scripts.Foo, Realbook.Scripts.Bar, Realbook.Scripts.Baz]
+  ```
+
   ### warning:
   this doesn't currently perform cyclical dependency checks.
   """

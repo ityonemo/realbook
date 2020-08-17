@@ -232,11 +232,11 @@ defmodule Realbook do
 
         {module, basename}
     end
-    # check to see if this module already exists.
 
+    # take out a lock on the compiler.
+    :locked = Realbook.Semaphore.lock({:compiler, module})
     cond do
-      Realbook.Semaphore.lock({:compiler, module}) == :cleared ->
-        module
+      # check to see if this module already exists.
       function_exported?(module, :__info__, 1) ->
         Realbook.Semaphore.unlock({:compiler, module})
         module
@@ -282,7 +282,7 @@ defmodule Realbook do
 
       # generate the exec function.
       Realbook.Macros.__exec__()
-      
+
       @before_compile Realbook.Macros
     end
   end
