@@ -30,10 +30,28 @@ defmodule RealbookTest.Commands.AssignsTest do
 
       assert_receive {:content, "foobar\n"}
     end
+
+    test "assigns can be pipelined into" do
+      Realbook.set(foo: "foo")
+
+      Realbook.eval("""
+      verify false
+
+      play do
+        result = [:foo]
+        |> assigns |> Map.get(:foo)
+        |> Kernel.<>("bar")
+
+        send(self(), {:result, result})
+      end
+      """)
+
+      assert_receive {:result, "foobar"}
+    end
+
   end
 
   describe "when there's a key that isn't there" do
-    @tag :one
     test "realbook fails" do
       import Realbook
 
