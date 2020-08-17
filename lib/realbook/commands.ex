@@ -602,6 +602,36 @@ defmodule Realbook.Commands do
     end
   end
 
+  @doc """
+  prepends the realbook :asset_dir to the given path.  Raises if the file
+  at the selected location doesn't exist.
+  """
+  defmacro asset_path!(path) do
+    if __CALLER__.function do
+      raise CompileError, message:
+        "you can only call asset_path!/1 at compile time"
+    end
+
+    file = __CALLER__.file
+    line = __CALLER__.line
+
+    quote bind_quoted: [path: path, file: file, line: line] do
+      path = :realbook
+      |> Application.fetch_env!(:asset_dir)
+      |> Path.join(path)
+      |> Path.expand
+
+      unless File.exists?(path) do
+        raise CompileError,
+          file: file,
+          line: line,
+          description: "required asset #{path} does not exist."
+      end
+
+      path
+    end
+  end
+
   def __asset__(path) do
     :realbook
     |> Application.fetch_env!(:asset_dir)

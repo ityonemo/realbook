@@ -31,4 +31,29 @@ defmodule RealbookTest.Commands.AssignsTest do
       assert_receive {:content, "foobar\n"}
     end
   end
+
+  describe "when there's a key that isn't there" do
+    @tag :one
+    test "realbook fails" do
+      import Realbook
+
+      # only set foo, but not bar.
+      Realbook.set(foo: "foo")
+
+      assert_raise KeyError,
+      "key :bar not found, expected by #{__ENV__.file} (line #{__ENV__.line + 9})", fn ->
+        ~B"""
+        require EEx
+
+        EEx.function_from_file(:def, :my_fun, asset_path!("assign_test.eex"), [:assigns])
+
+        verify false
+
+        play do
+          my_fun(assigns([:foo, :bar]))
+        end
+        """
+      end
+    end
+  end
 end
