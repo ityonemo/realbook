@@ -1,22 +1,35 @@
-defmodule Realbook.CompilerSemaphore do
+defmodule Realbook.Semaphore do
+  @moduledoc false
+  use GenServer
+
   # a compiler semaphore for Realbook which ensures that
   # only one compilation unit attempts to compile a module
   # at a time
 
   @type state :: %{optional(module) => [GenServer.from]}
 
-  def start_link do
+  def start_link(_) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  def init(nil), do: {:ok, %{}}
+  @impl true
+  def init(_), do: {:ok, %{}}
 
-  # if something takes more than 5 seconds to compile, it's probably
-  # a problem.
-  @spec lock(module) :: :locked | :cleared
-  def lock(what), do: GenServer.call(__MODULE__, {:lock, what})
+  @spec lock(term, timeout) :: :locked
+  def lock(what, timeout \\ 5000) do
+    last_time = DateTime.utc_now()
+    case GenServer.call(__MODULE__, {:lock, what}, timeout) do
+      :locked -> :locked
+      :cleared ->
+        time_left = timeout - DateTime.diff(DateTime.utc_now(), last_time, :millisecond)
+        unless timeout > 0 do
+          raise "timed out"
+        end
+        lock(what, time_left)
+    end
+  end
   defp lock_impl(what, from, lock_list) when is_map_key(lock_list, what) do
-    # if we arent' the first one here, we have to add ourselves to the list
+    # if we aren't the first one here, we have to add ourselves to the list
     # of processes that need to be notified to be unlocked.
     {:noreply, Map.put(lock_list, what, [from | lock_list[what]])}
   end
@@ -28,9 +41,20 @@ defmodule Realbook.CompilerSemaphore do
     {:reply, :locked, Map.put(lock_list, what, [])}
   end
 
-  @spec unlock(module) :: module
+  @spec unlock(term) :: module
   def unlock(what), do: GenServer.call(__MODULE__, {:unlock, what})
-  defp unlock_impl(what, lock_list) do
+
+  defp unlock_impl({pid, what}, lock_list) when is_pid(pid) do
+    true_key = cond do
+      Map.has_key?(lock_list, {:global, what}) -> {:global, what}
+      Map.has_key?(lock_list, {pid, what}) -> {pid, what}
+      true -> raise "key #{inspect what} not found"
+    end
+    unlock_impl_common(true_key, lock_list)
+  end
+  defp unlock_impl(what, lock_list), do: unlock_impl_common(what, lock_list)
+
+  defp unlock_impl_common(what, lock_list) do
     # the locking process has finished its compilation and so it needs to
     # release all of the modules, then it needs to clear the list of
     # things that need bo contacted.
@@ -38,6 +62,7 @@ defmodule Realbook.CompilerSemaphore do
     {:reply, what, Map.delete(lock_list, what)}
   end
 
+  @impl true
   def handle_call({:lock, what}, from, lock_list) do
     lock_impl(what, from, lock_list)
   end

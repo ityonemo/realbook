@@ -93,14 +93,21 @@ defmodule Realbook.Commands do
   @doc """
   runs a command on the remote host.
 
-  For options, consult your adapter module.
+  Note that currently, `:ssh` does support using piping operatiors
+  inside of the command, but `:local` does not.
 
   raises Realbook.ExecutionError if there is a connection error.
 
-  if the command is executed, returns:
-
+  ## Return Values
   - `{:ok, stdout}` if the command has zero return code.
   - `{:error, error, retcode}` if the command has nonzero return code.
+
+  ## Common Supported Options
+  - `:sudo` when true, runs as superuser.
+  - `:cd` changes directory prior to executing command
+
+  for options with :local, consult `System.cmd/3`; for options
+  with :ssh, connsult `SSH.run/3`
 
   ### Note
 
@@ -155,40 +162,40 @@ defmodule Realbook.Commands do
     file = __CALLER__.file
     quote bind_quoted: [cmd: cmd, opts: opts, line: line, file: file] do
       case Realbook.Commands.__run__(cmd, opts) do
-        {:ok, {stdout, _stderr}, 0} ->
-          String.trim(stdout)
+        {:ok, {stdout, stderr}, 0} ->
+          {String.trim(stdout), stderr}
         {:ok, stdout, 0} ->
           String.trim(stdout)
         {:ok, {_, stderr}, retcode} ->
-          sudo = opts[:sudo] && "sudo_"
+          macro = opts[:macro] || "run!"
           raise Realbook.ExecutionError,
             name: __label__(),
             stage: Realbook.stage(),
             module: __MODULE__,
             file: file,
             line: line,
-            cmd: ~s(#{sudo}run! "#{cmd}"),
+            cmd: ~s(#{macro} "#{cmd}"),
             stderr: stderr,
             retcode: retcode
         {:ok, _, retcode} ->
-          sudo = opts[:sudo] && "sudo_"
+          macro = opts[:macro] || "run!"
           raise Realbook.ExecutionError,
             name: __label__(),
             stage: Realbook.stage(),
             module: __MODULE__,
             file: file,
             line: line,
-            cmd: ~s(#{sudo}run! "#{cmd}"),
+            cmd: ~s(#{macro} "#{cmd}"),
             retcode: retcode
         {:error, err} ->
-          sudo = opts[:sudo] && "sudo_"
+          macro = opts[:macro] || "run!"
           raise Realbook.ExecutionError,
             name: __label__(),
             stage: Realbook.stage(),
             module: __MODULE__,
             file: file,
             line: line,
-            cmd: ~s(#{sudo}run! "#{cmd}"),
+            cmd: ~s(#{macro} "#{cmd}"),
             error: err
       end
     end
@@ -200,7 +207,7 @@ defmodule Realbook.Commands do
     # since certain things like environment variables may have to be handled
     # differently when moving into a SUDO system.
     quote bind_quoted: [cmd: cmd, opts: opts] do
-      run(cmd, opts ++ [sudo: true])
+      run(cmd, opts ++ [sudo: true, macro: "sudo_run"])
     end
   end
 
@@ -210,7 +217,54 @@ defmodule Realbook.Commands do
     # since certain things like environment variables may have to be handled
     # differently when moving into a SUDO system.
     quote bind_quoted: [cmd: cmd, opts: opts] do
-      run!(cmd, opts ++ [sudo: true])
+      run!(cmd, opts ++ [sudo: true, macro: "sudo_run!"])
+    end
+  end
+
+  @doc """
+  shortcut for `run! <cmd>, tty: true, stdout: :stream`
+
+  Generally this should be used for `apt-get` commands.
+  """
+  defmacro run_tty!(cmd, opts \\ []) do
+    quote bind_quoted: [cmd: cmd, opts: opts] do
+      run!(cmd, Keyword.merge([tty: true, stdout: :stream, macro: "run_tty!"], opts))
+    end
+  end
+
+  @doc "like `run_tty!/2`, except with the command run as superuser"
+  defmacro sudo_run_tty!(cmd, opts \\ []) do
+    # punt to the existing run command.  This may change in the future
+    # since certain things like environment variables may have to be handled
+    # differently when moving into a SUDO system.
+    quote bind_quoted: [cmd: cmd, opts: opts] do
+      run_tty!(cmd, opts ++ [sudo: true, macro: "sudo_run_tty!"])
+    end
+  end
+
+  @doc """
+  executes a command, ignoring the stdio output of the command, returning
+  true if the command has a 0 unix return value and false otherwise.
+
+  raises on connection errors.
+  """
+  defmacro run_bool!(cmd, opts \\ []) do
+    line = __CALLER__.line
+    file = __CALLER__.file
+    quote bind_quoted: [cmd: cmd, opts: opts, line: line, file: file] do
+      case Realbook.Commands.__run__(cmd, opts) do
+        {:ok, _, 0} -> true
+        {:ok, _, _} -> false
+        {:error, err} ->
+          raise Realbook.ExecutionError,
+            name: __label__(),
+            stage: Realbook.stage(),
+            module: __MODULE__,
+            file: file,
+            line: line,
+            cmd: ~s(run_bool! "#{cmd}"),
+            error: err
+      end
     end
   end
 
@@ -523,21 +577,112 @@ defmodule Realbook.Commands do
 
   raises if `:asset_dir` is not set or if there is a problem with the file.
   """
-  defmacro asset!(file_path) do
-    Realbook.Macros.append_attribute(
-      __CALLER__.module,
-      :required_assets,
-      %Realbook.Asset{
-        path: file_path,
-        file: __CALLER__.file,
-        line: __CALLER__.line})
+  defmacro asset!(path) do
+    %{file: file, line: line} = __CALLER__
+    if __CALLER__.function do
+      Realbook.Macros.append_attribute(
+        __CALLER__.module,
+        :required_assets,
+        %Realbook.Asset{path: path, file: file, line: line})
+      quote bind_quoted: [path: path] do
+        Realbook.Commands.__asset__(path)
+      end
+    else
+      quote bind_quoted: [path: path, file: file, line: line] do
+        try do
+          Realbook.Commands.__asset__(path)
+        rescue
+          e in File.Error ->
+            raise CompileError,
+              file: file,
+              line: line,
+              description: "required asset #{path} cannot be loaded (#{:file.format_error e.reason})"
+        end
+      end
+    end
+  end
 
-    quote bind_quoted: [path: file_path] do
-      :realbook
+  @doc """
+  prepends the realbook :asset_dir to the given path.  Raises if the file
+  at the selected location doesn't exist.
+  """
+  defmacro asset_path!(path) do
+    if __CALLER__.function do
+      raise CompileError, message:
+        "you can only call asset_path!/1 at compile time"
+    end
+
+    file = __CALLER__.file
+    line = __CALLER__.line
+
+    quote bind_quoted: [path: path, file: file, line: line] do
+      path = :realbook
       |> Application.fetch_env!(:asset_dir)
       |> Path.join(path)
       |> Path.expand
-      |> File.read!
+
+      unless File.exists?(path) do
+        raise CompileError,
+          file: file,
+          line: line,
+          description: "required asset #{path} does not exist."
+      end
+
+      path
+    end
+  end
+
+  def __asset__(path) do
+    :realbook
+    |> Application.fetch_env!(:asset_dir)
+    |> Path.join(path)
+    |> Path.expand
+    |> File.read!
+  end
+
+  #############################################################################
+  ## semaphores:  Locking and Unlocking
+
+  @doc """
+  takes out a semaphore lock against a key.  Only one process may pass
+  through this semaphore at a time.
+
+  For example, if you would like to run `apt` commands in concurrent tasks
+  then, you will want to make sure that only one task may obtain the remote
+  process lock at a time.  You can thus take out a semaphore.
+
+  ## Options
+  - `:timeout` how long to wait for the timeout.  Defaults to 5000 ms.
+  - `:global` if true, takes out a semaphore across all realbooks.
+  """
+  defmacro lock(value, options \\ []) do
+    timeout = Keyword.get(options, :timeout, 5000)
+    if options[:global] do
+      quote bind_quoted: [value: value, timeout: timeout] do
+        Realbook.Semaphore.lock({:global, value}, timeout)
+      end
+    else
+      quote bind_quoted: [value: value, timeout: timeout] do
+        caller = :"$callers"
+        |> Process.get([self()])
+        |> List.last
+
+        Realbook.Semaphore.lock({caller, value}, timeout)
+      end
+    end
+  end
+
+  @doc """
+  releases a semaphore lock against a key.  Will selectively release a
+  local key and ignore a global key if they share a name.
+  """
+  defmacro unlock(value) do
+    quote bind_quoted: [value: value] do
+      caller = :"$callers"
+      |> Process.get([self()])
+      |> List.last
+
+      Realbook.Semaphore.unlock({caller, value})
     end
   end
 

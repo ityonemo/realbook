@@ -8,14 +8,12 @@ defmodule RealbookTest.Commands.RunTest do
     end
 
     test "works in play" do
-      Realbook.set(test_pid: self())
-
       Realbook.eval("""
       verify false
 
       play do
         result = run! "whoami"
-        send((get :test_pid), {:result, result})
+        send(self(), {:result, result})
       end
       """)
 
@@ -23,7 +21,7 @@ defmodule RealbookTest.Commands.RunTest do
       |> System.cmd([])
       |> elem(0)
       |> String.trim
-      
+
       assert_receive {:result, ^whoami}
     end
 
@@ -96,6 +94,22 @@ defmodule RealbookTest.Commands.RunTest do
         """)
       end
     end
+
+    test "works with :cd option" do
+      Realbook.set(dir: __DIR__)
+
+      Realbook.eval("""
+      verify false
+      play do
+        dir = get :dir
+        ls = run! "ls", cd: dir
+        send(self(), {:ls, ls})
+      end
+      """)
+
+      assert_receive {:ls, ls}
+      assert ls =~ Path.basename(__ENV__.file)
+    end
   end
 
   describe "run!/2 with ssh" do
@@ -103,7 +117,6 @@ defmodule RealbookTest.Commands.RunTest do
       {username, 0} = System.cmd("whoami", [])
       username = String.trim(username)
       Realbook.connect!(:ssh, host: "localhost", user: username)
-      Realbook.set(test_pid: self())
       {:ok, username: username}
     end
 
@@ -113,11 +126,27 @@ defmodule RealbookTest.Commands.RunTest do
 
       play do
         result = run! "whoami"
-        send((get :test_pid), {:result, result})
+        send(self(), {:result, result})
       end
       """)
 
       assert_receive {:result, ^username}
+    end
+
+    test "works with :cd option" do
+      Realbook.set(dir: __DIR__)
+
+      Realbook.eval("""
+      verify false
+      play do
+        dir = get :dir
+        ls = run! "ls", cd: dir
+        send(self(), {:ls, ls})
+      end
+      """)
+
+      assert_receive {:ls, ls}
+      assert ls =~ Path.basename(__ENV__.file)
     end
   end
 
@@ -140,6 +169,42 @@ defmodule RealbookTest.Commands.RunTest do
 
       {whoami, 0} = System.cmd("whoami", [])
       assert_receive {:result, {:ok, ^whoami}}
+    end
+  end
+
+  describe "run_tty!/2" do
+    setup do
+      Realbook.connect!(Realbook.Adapters.Local)
+      :ok
+    end
+
+    test "works with ssh" do
+      Realbook.eval("""
+      verify false
+
+      play do
+        hostname = run_tty! "hostname"
+        send(self(), {:hostname, hostname})
+      end
+      """)
+
+      {hostname_str, 0} = System.cmd("hostname", [])
+      hostname = String.trim(hostname_str)
+
+      assert_receive {:hostname, ^hostname}
+    end
+
+    test "errors with correct line numbers" do
+      import Realbook
+      assert_raise Realbook.ExecutionError,
+        "error in anonymous Realbook, stage: play, command run_tty! \"false\", (line #{__ENV__.line + 4}), with retcode 1", fn ->
+        ~B"""
+        verify false
+        play do
+          run_tty! "false"
+        end
+        """
+      end
     end
   end
 end

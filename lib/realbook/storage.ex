@@ -1,21 +1,13 @@
 defmodule Realbook.Storage do
-
-  # TODO: roll this into a more idiomatic Realbook.Application module
-
   @moduledoc false
   # this module creates an ets table which holds active realbook
   # information for concurrent systems.
 
-  use Application
   use GenServer
 
-  @impl Application
-  def start(_, _) do
-    Realbook.CompilerSemaphore.start_link()
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
-  end
+  def start_link(_), do: GenServer.start_link(__MODULE__, nil)
 
-  @impl GenServer
+  @impl true
   def init(nil) do
     :ets.new(__MODULE__, [:set, :public, :named_table, read_concurrency: true, write_concurrency: true])
     # hibernates, since the only purpose of this GenServer is to

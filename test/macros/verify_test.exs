@@ -15,8 +15,7 @@ defmodule RealbookTest.Macros.VerifyTest do
       end
 
       play do
-        (get :test_pid)
-        |> send(:playing)
+        send(self(), :playing)
       end
       """)
 

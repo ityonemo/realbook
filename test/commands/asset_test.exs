@@ -8,8 +8,6 @@ defmodule RealbookTest.Commands.AssetTest do
 
   describe "asset!/3" do
     test "works at compile-time" do
-      Realbook.set(test_pid: self())
-
       Realbook.eval("""
 
       @foo asset!("foo.txt")
@@ -17,7 +15,7 @@ defmodule RealbookTest.Commands.AssetTest do
       verify false
 
       play do
-        send((get :test_pid), {:content, @foo})
+        send(self(), {:content, @foo})
       end
       """)
 
@@ -25,13 +23,11 @@ defmodule RealbookTest.Commands.AssetTest do
     end
 
     test "works at runtime" do
-      Realbook.set(test_pid: self())
-
       Realbook.eval("""
       verify false
 
       play do
-        send((get :test_pid), {:content, asset!("foo.txt")})
+        send(self(), {:content, asset!("foo.txt")})
       end
       """)
 
@@ -47,6 +43,58 @@ defmodule RealbookTest.Commands.AssetTest do
           asset!("this_does_not_exist")
         end
         """)
+      end
+    end
+  end
+
+  describe "when the asset doesn't exist" do
+    test "at compile-time becomes a compile-time error" do
+      import Realbook
+      assert_raise CompileError, "test/commands/asset_test.exs:#{__ENV__.line + 2}: required asset does-not-exist.txt cannot be loaded (no such file or directory)", fn ->
+        ~B"""
+        @nope asset!("does-not-exist.txt")
+
+        verify false
+        play do end
+        """
+      end
+    end
+  end
+
+  describe "asset_path/1" do
+    test "will provide the asset path" do
+      import Realbook
+
+      ~B"""
+      @asset_path asset_path!("foo.txt")
+
+      verify false
+      play do
+        send(self(), {:asset, @asset_path})
+      end
+      """
+
+      assert_receive {:asset, asset_path}
+      assert "foo.txt" == Path.basename(asset_path)
+    end
+
+    @tag :one
+    test "raises with compiler error if it doesn't exist" do
+      import Realbook
+
+      asset_dir = Application.get_env(:realbook, :asset_dir)
+      code_file = Path.relative_to_cwd(__ENV__.file)
+
+      assert_raise CompileError,
+        "#{code_file}:#{__ENV__.line + 2}: required asset #{asset_dir}/does-not-exist.txt does not exist.", fn ->
+        ~B"""
+        @asset_path asset_path!("does-not-exist.txt")
+
+        verify false
+        play do
+          send(self(), {:asset, @asset_path})
+        end
+        """
       end
     end
   end

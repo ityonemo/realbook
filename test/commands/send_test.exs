@@ -84,8 +84,7 @@ defmodule RealbookTest.Commands.SendTest do
     test "can take a permissions value", %{dir: dir} do
       Realbook.set(
         test_dir: dir,
-        test_file: Path.join(dir, "foo"),
-        test_pid: self()
+        test_file: Path.join(dir, "foo")
       )
 
       Realbook.eval("""
@@ -99,7 +98,7 @@ defmodule RealbookTest.Commands.SendTest do
         test_file = get :test_file
         send! @script, test_file, permissions: 0o777
         result = run! test_file
-        send (get :test_pid), {:result, result}
+        send(self(), {:result, result})
       end
       """)
 

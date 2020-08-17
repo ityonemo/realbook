@@ -1,10 +1,6 @@
 defmodule RealbookTest.Dictionary.GetTest do
   use ExUnit.Case, async: true
 
-  setup do
-    Realbook.set(test_pid: self())
-  end
-
   describe "trying to retrieve dictionary values" do
     test "works with Realbook.Dictionary.get/1" do
       Realbook.Dictionary.set(foo: "bar")
@@ -33,12 +29,12 @@ defmodule RealbookTest.Dictionary.GetTest do
 
     test "works inside of string interpolation" do
       Realbook.connect!(:local)
-      Realbook.set(test_pid: self(), content: "foo")
+      Realbook.set(content: "foo")
 
       Realbook.eval(~S"""
       verify false
       play do
-        send((get :test_pid), {:content, "#{get :content}"})
+        send(self(), {:content, "#{get :content}"})
       end
       """)
 
@@ -47,27 +43,21 @@ defmodule RealbookTest.Dictionary.GetTest do
   end
 
   describe "trying to execute a realbook that requires a value" do
-
     setup do
       Realbook.connect!(:local)
-      Realbook.set(test_pid: self())
+      :ok
     end
 
     test "fails if it hasn't been set" do
       import Realbook
-
-      file = __ENV__.file
-      line = __ENV__.line + 10
       assert_raise KeyError,
-        "key :foo not found, expected by #{file} (line #{line})",
+        "key :foo not found, expected by #{__ENV__.file} (line #{__ENV__.line + 7})",
         fn ->
-          ~b"""
+          ~B"""
           verify false
 
           play do
-            (get :test_pid)
-            |> send(:playing)
-
+            send(self(), :playing)
             get :foo
           end
           """
@@ -83,8 +73,7 @@ defmodule RealbookTest.Dictionary.GetTest do
 
       play do
         foo = get :foo, "running"
-        (get :test_pid)
-        |> send({:msg, foo})
+        send(self(), {:msg, foo})
       end
       """, "nofile")
 
@@ -98,8 +87,7 @@ defmodule RealbookTest.Dictionary.GetTest do
 
       play do
         foo = get :foo, "running"
-        (get :test_pid)
-        |> send({:msg, foo})
+        send(self(), {:msg, foo})
       end
       """, "nofile")
 
