@@ -64,7 +64,6 @@ defmodule RealbookTest.Commands.SudoRunTest do
       {username, 0} = System.cmd("whoami", [])
       username = String.trim(username)
       Realbook.connect!(:ssh, host: "localhost", user: username)
-      Realbook.set(test_pid: self())
       :ok
     end
 
@@ -74,7 +73,7 @@ defmodule RealbookTest.Commands.SudoRunTest do
 
       play do
         result = sudo_run! "whoami"
-        send((get :test_pid), {:result, result})
+        send(self(), {:result, result})
       end
       """)
 
@@ -91,13 +90,12 @@ defmodule RealbookTest.Commands.SudoRunTest do
     end
 
     test "works in play" do
-      Realbook.set(test_pid: self())
       Realbook.eval("""
       verify false
 
       play do
         result = sudo_run "whoami"
-        send((get :test_pid), {:result, result})
+        send(self(), {:result, result})
       end
       """)
 

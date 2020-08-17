@@ -8,8 +8,6 @@ defmodule RealbookTest.Commands.AssetTest do
 
   describe "asset!/3" do
     test "works at compile-time" do
-      Realbook.set(test_pid: self())
-
       Realbook.eval("""
 
       @foo asset!("foo.txt")
@@ -17,7 +15,7 @@ defmodule RealbookTest.Commands.AssetTest do
       verify false
 
       play do
-        send((get :test_pid), {:content, @foo})
+        send(self(), {:content, @foo})
       end
       """)
 
@@ -25,13 +23,11 @@ defmodule RealbookTest.Commands.AssetTest do
     end
 
     test "works at runtime" do
-      Realbook.set(test_pid: self())
-
       Realbook.eval("""
       verify false
 
       play do
-        send((get :test_pid), {:content, asset!("foo.txt")})
+        send(self(), {:content, asset!("foo.txt")})
       end
       """)
 

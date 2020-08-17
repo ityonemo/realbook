@@ -9,7 +9,6 @@ defmodule RealbookTest.Commands.AssignsTest do
   describe "assigns/1" do
     test "works at compile-time" do
       Realbook.set(
-        test_pid: self(),
         foo: "foo",
         bar: "bar")
 
@@ -22,9 +21,7 @@ defmodule RealbookTest.Commands.AssignsTest do
       verify false
 
       play do
-        test_pid = get :test_pid
-
-        send(test_pid, {:content, my_fun(assigns([:foo, :bar]))})
+        send(self(), {:content, my_fun(assigns([:foo, :bar]))})
       end
       """)
 

@@ -8,14 +8,12 @@ defmodule RealbookTest.Commands.RunTest do
     end
 
     test "works in play" do
-      Realbook.set(test_pid: self())
-
       Realbook.eval("""
       verify false
 
       play do
         result = run! "whoami"
-        send((get :test_pid), {:result, result})
+        send(self(), {:result, result})
       end
       """)
 
@@ -119,7 +117,6 @@ defmodule RealbookTest.Commands.RunTest do
       {username, 0} = System.cmd("whoami", [])
       username = String.trim(username)
       Realbook.connect!(:ssh, host: "localhost", user: username)
-      Realbook.set(test_pid: self())
       {:ok, username: username}
     end
 
@@ -129,7 +126,7 @@ defmodule RealbookTest.Commands.RunTest do
 
       play do
         result = run! "whoami"
-        send((get :test_pid), {:result, result})
+        send(self(), {:result, result})
       end
       """)
 
