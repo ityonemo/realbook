@@ -4,7 +4,7 @@ defmodule Realbook.MixProject do
   def project do
     [
       app: :realbook,
-      version: "0.2.2",
+      version: "0.3.0",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],

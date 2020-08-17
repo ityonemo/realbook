@@ -46,6 +46,16 @@
 - added logger metadata and information to disambiguate hosts in
   concurrent deploys
 
+## 0.3.0
+
+- added `Realbook.Commands.asset!/1`
+- added `Realbook.Commands.asset_path!/1`
+- added `Realbook.Commands.run_tty/2!`
+- added `Realbook.Commands.run_bool!/2`
+- added support for statically included `.ex` realbooks
+- generalized compiler semaphore for general use
+- fixed bug in `Roalbook.Commands.sudo_send!/2`
+
 ## Future features:
 
 - Deployment guides
