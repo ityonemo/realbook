@@ -42,6 +42,8 @@ defmodule Realbook.Adapters.Local do
   ###########################################################################
   ## SEND AND FRIENDS
 
+  @type sendable :: binary | iodata | %File.Stream{} | %Stream{enum: %File.Stream{}}
+
   @impl true
   @spec send(:local, binary, Path.t, keyword) ::
     :ok | {:error, File.posix}
@@ -52,7 +54,13 @@ defmodule Realbook.Adapters.Local do
     end
   end
 
-  @spec do_send(binary, Path.t, keyword) :: :ok | {:error, File.posix}
+  @spec do_send(sendable, Path.t, keyword) :: :ok | {:error, File.posix}
+  defp do_send(stream = %File.Stream{}, destination, opts) do
+    do_send_stream(stream, destination, opts)
+  end
+  defp do_send(stream = %Stream{enum: %File.Stream{}}, destination, opts) do
+    do_send_stream(stream, destination, opts)
+  end
   defp do_send(content, destination, opts) do
     if opts[:sudo] do
       sudo_send(content, destination)
@@ -61,7 +69,19 @@ defmodule Realbook.Adapters.Local do
     end
   end
 
-  @spec sudo_send(binary, Path.t) :: :ok | {:error, atom | binary}
+  defp do_send_stream(stream, destination, opts) do
+    if opts[:sudo] do
+      sudo_send(stream, destination)
+    else
+      stream
+      |> Stream.into(File.stream!(destination))
+      |> Stream.run()
+    end
+  catch
+    e -> {:error, inspect(e)}
+  end
+
+  @spec sudo_send(sendable, Path.t) :: :ok | {:error, atom | binary}
   defp sudo_send(content, destination) do
     # create a temporary directory and then send it from there.
     # there might be a better solution for this, possibly using

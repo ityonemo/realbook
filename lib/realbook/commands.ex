@@ -274,6 +274,16 @@ defmodule Realbook.Commands do
 
   returns ok if successful and raises on either a connection error or a
   sending error.
+
+  Note: for large binary content, you may want to consider sending a
+  file stream, so that the entire binary is never held in-memory.
+
+  ## Example
+  ```
+  # load the file in 1k chunks
+  fstream = File.stream!("path/to/source", [], 1024)
+  send!(fstream, "path/to/destination")
+  ```
   """
   defmacro send!(content, path, opts \\ []) do
     line = __CALLER__.line

@@ -4,7 +4,7 @@ defmodule Realbook.MixProject do
   def project do
     [
       app: :realbook,
-      version: "0.3.0",
+      version: "0.3.1",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
@@ -54,7 +54,7 @@ defmodule Realbook.MixProject do
 
   defp deps do
     [
-      {:librarian, "~> 0.1.12"},
+      {:librarian, "~> 0.2.0"},
       {:net_address, "~> 0.2"},
       # test and support dependencies
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},

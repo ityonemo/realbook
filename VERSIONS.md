@@ -56,6 +56,10 @@
 - generalized compiler semaphore for general use
 - fixed bug in `Roalbook.Commands.sudo_send!/2`
 
+## 0.3.1
+
+- updated to use Librarian 0.2.0 with guidelines for large file scp.
+
 ## Future features:
 
 - Deployment guides

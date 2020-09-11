@@ -78,7 +78,6 @@ defmodule RealbookTest.Commands.AssetTest do
       assert "foo.txt" == Path.basename(asset_path)
     end
 
-    @tag :one
     test "raises with compiler error if it doesn't exist" do
       import Realbook
 

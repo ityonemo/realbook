@@ -8,6 +8,10 @@ defmodule RealbookTest.Commands.SendTest do
     {:ok, dir: random_dirname}
   end
 
+  def shasum(file) do
+    :crypto.hash(:sha256, File.read!(file))
+  end
+
   describe "send!/2" do
     setup do
       Realbook.connect!(Realbook.Adapters.Local)
@@ -105,6 +109,34 @@ defmodule RealbookTest.Commands.SendTest do
       assert_receive {:result, "foo"}
     end
 
+    test "can send file streams" do
+      tmp_dir = Realbook.tmp_dir!()
+      Realbook.set(tmp_dir: tmp_dir)
+      File.mkdir_p!(tmp_dir)
+
+      src = Path.join(tmp_dir, "src")
+      dst = Path.join(tmp_dir, "dst")
+
+      # create the source file
+      Stream.repeatedly(fn -> :crypto.strong_rand_bytes(1024) end)
+      |> Stream.take(10)
+      |> Enum.into(File.stream!(src, [:write], 1024))
+
+      Realbook.eval("""
+      verify false
+      play do
+        tmp_dir = get(:tmp_dir)
+
+        tmp_dir
+        |> Path.join("src")
+        |> File.stream!([], 1024)
+        |> send!(Path.join(tmp_dir, "dst"))
+      end
+      """)
+
+      assert shasum(src) == shasum(dst)
+    end
+
     test "raises if the filename symbol is not a String" do
       Realbook.set(test_file: 47)
 
@@ -165,6 +197,34 @@ defmodule RealbookTest.Commands.SendTest do
       assert (tmp_dir
       |> Path.join("foo")
       |> File.read!) =~ "bar"
+    end
+
+    test "can send file streams" do
+      tmp_dir = Realbook.tmp_dir!()
+      Realbook.set(tmp_dir: tmp_dir)
+      File.mkdir_p!(tmp_dir)
+
+      src = Path.join(tmp_dir, "src")
+      dst = Path.join(tmp_dir, "dst")
+
+      # create the source file
+      Stream.repeatedly(fn -> :crypto.strong_rand_bytes(1024) end)
+      |> Stream.take(10)
+      |> Enum.into(File.stream!(src, [:write], 1024))
+
+      Realbook.eval("""
+      verify false
+      play do
+        tmp_dir = get(:tmp_dir)
+
+        tmp_dir
+        |> Path.join("src")
+        |> File.stream!([], 1024)
+        |> send!(Path.join(tmp_dir, "dst"))
+      end
+      """)
+
+      assert shasum(src) == shasum(dst)
     end
   end
 end

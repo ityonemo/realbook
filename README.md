@@ -12,7 +12,7 @@ This is the package for you.
 `0.2.0` represents the first release which has been tested in a real-world
 deployment scenario.
 
-`0.3.0` will add extra guards and protections, including optional typing
+`0.4.0` will add extra guards and protections, including optional typing
 on variables.
 
 The API will be stabilized by `0.5.0`, at which point the following
@@ -71,7 +71,7 @@ The package can be installed by adding `realbook` to your list of dependencies i
 ```elixir
 def deps do
   [
-    {:realbook, "~> 0.3.0"}
+    {:realbook, "~> 0.3.1"}
   ]
 end
 ```
